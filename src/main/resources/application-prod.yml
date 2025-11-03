@@ -1,0 +1,93 @@
+# Production Environment Configuration
+
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/elmify_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+  
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        use_sql_comments: false
+        jdbc:
+          batch_size: 50
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region:
+            factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+  
+  flyway:
+    clean-disabled: true
+    validate-on-migrate: true
+
+# Production server configuration
+server:
+  port: ${PORT:8080}
+  tomcat:
+    max-threads: 200
+    min-spare-threads: 10
+    connection-timeout: 20000
+  compression:
+    enabled: true
+  forward-headers-strategy: framework
+
+# Production logging
+logging:
+  level:
+    root: WARN
+    com.audibleclone: INFO
+    org.springframework.security: WARN
+  pattern:
+    console: "%d{ISO8601} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+  file:
+    name: /var/log/audibleclone/application.log
+    max-size: 100MB
+    max-history: 30
+
+# Production-specific configuration
+audibleclone:
+  security:
+    rate-limiting:
+      enabled: true
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://your-react-native-app.com}
+  
+  r2:
+    # Production R2 configuration
+    endpoint: https://b995be98e08909685abfca00c971e79e.r2.cloudflarestorage.com
+    bucket-name: elmify-audio
+    access-key: ${R2_ACCESS_KEY}
+    secret-key: ${R2_SECRET_KEY}
+    region: auto
+    presigned-url-expiration: PT30M  # 30 minutes in production
+  
+  clerk:
+    secret-key: ${CLERK_SECRET_KEY}
+    publishable-key: ${CLERK_PUBLISHABLE_KEY}
+    jwt-issuer: ${CLERK_JWT_ISSUER}
+
+# Production monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: PT1M

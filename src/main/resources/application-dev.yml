@@ -1,0 +1,85 @@
+# Development Environment Configuration
+
+app:
+  cors:
+    allowed-origins: http://localhost:8085,http://localhost:19006
+  security:
+    admin-emails: dalanhabib@gmail.com
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/elmify_db
+    username: alanhabib
+    password: password
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      auto-commit: true
+  
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        transaction:
+          flush_before_completion: true
+          auto_close_session: true
+    hibernate:
+      ddl-auto: none
+  
+  flyway:
+    clean-disabled: false
+
+# Server configuration for development
+server:
+  port: 8081
+
+# Enhanced logging for development
+logging:
+  level:
+    com.audibleclone: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type: TRACE
+    org.springframework.transaction: DEBUG
+  file:
+    name: logs/audibleclone-dev.log
+
+# Development-specific configuration
+audibleclone:
+  cors:
+    allowed-origins: "*"  # Allow all origins in development
+  
+  r2:
+    # For local development, use MinIO
+    endpoint: http://127.0.0.1:9000
+    bucket-name: elmify-audio
+    access-key: minioadmin
+    secret-key: minioadmin
+    region: us-east-1
+    presigned-url-expiration: PT1H  # 1 hour for development
+  
+  clerk:
+    # Development Clerk keys (use test keys)
+    secret-key: ${CLERK_SECRET_KEY}
+    publishable-key: ${CLERK_PUBLISHABLE_KEY}
+    jwt-issuer: ${CLERK_JWT_ISSUER}
+  
+  migration:
+    # Migration from R2 to MinIO (disabled in development since migration is complete)
+    source:
+      endpoint: https://dummy.r2.cloudflarestorage.com
+      access-key: "dummy-access-key"
+      secret-key: "dummy-secret-key"
+      bucket: elmify-audio
+
+# Development-only features
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"  # Expose all actuator endpoints in dev
