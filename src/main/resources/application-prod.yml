@@ -46,17 +46,17 @@ server:
 logging:
   level:
     root: WARN
-    com.audibleclone: INFO
+    com.elmify: INFO
     org.springframework.security: WARN
   pattern:
     console: "%d{ISO8601} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
   file:
-    name: /var/log/audibleclone/application.log
+    name: /var/log/elmify/application.log
     max-size: 100MB
     max-history: 30
 
 # Production-specific configuration
-audibleclone:
+elmify:
   security:
     rate-limiting:
       enabled: true

@@ -85,7 +85,7 @@ Spring Boot supports two configuration formats:
 spring.datasource.url=jdbc:postgresql://localhost:5432/mydb
 spring.datasource.username=admin
 spring.jpa.show-sql=true
-logging.level.com.audibleclone=DEBUG
+logging.level.com.elmify=DEBUG
 ```
 
 ### YAML Format (`.yml`) ⭐ What You Use
@@ -99,7 +99,7 @@ spring:
     show-sql: true
 logging:
   level:
-    com.audibleclone: DEBUG
+    com.elmify: DEBUG
 ```
 
 **Why YAML is Better:**
@@ -170,12 +170,12 @@ spring:
 **Option 1: Environment Variable** (Production)
 ```bash
 export SPRING_PROFILES_ACTIVE=prod
-java -jar audibleclone-backend.jar
+java -jar elmify-backend.jar
 ```
 
 **Option 2: Command Line** (Testing)
 ```bash
-java -jar audibleclone-backend.jar --spring.profiles.active=prod
+java -jar elmify-backend.jar --spring.profiles.active=prod
 ```
 
 **Option 3: IDE Configuration** (Development)
@@ -220,7 +220,7 @@ Let's explore key sections of your configuration:
 ```yaml
 spring:
   application:
-    name: audibleclone-backend  # Application name (used in logs, monitoring)
+    name: elmify-backend  # Application name (used in logs, monitoring)
 
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}  # Which profile to activate
@@ -434,7 +434,7 @@ Your `StorageService.java` uses these settings without knowing whether it's MinI
 ```java
 @Service
 public class StorageService {
-    @Value("${audibleclone.r2.endpoint}")
+    @Value("${elmify.r2.endpoint}")
     private String endpoint;  // Automatically "http://127.0.0.1:9000" in dev
                               //              or R2 URL in prod!
 }
@@ -454,7 +454,7 @@ public class StorageService {
 logging:
   level:
     root: INFO                           # Default log level for all libraries
-    com.audibleclone: INFO               # Your application's log level
+    com.elmify: INFO               # Your application's log level
     org.springframework.security: INFO
     org.springframework.web: INFO
     org.hibernate.SQL: INFO              # SQL query logging
@@ -466,14 +466,14 @@ logging:
 ```yaml
 logging:
   level:
-    com.audibleclone: DEBUG              # See DEBUG messages
+    com.elmify: DEBUG              # See DEBUG messages
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG             # See all SQL queries
     org.hibernate.type: TRACE            # See parameter values in queries!
     org.springframework.transaction: DEBUG
   file:
-    name: logs/audibleclone-dev.log      # Write to file
+    name: logs/elmify-dev.log      # Write to file
 ```
 
 **`application-prod.yml` (lines 46-56):**
@@ -481,12 +481,12 @@ logging:
 logging:
   level:
     root: WARN                           # Only warnings and errors
-    com.audibleclone: INFO
+    com.elmify: INFO
     org.springframework.security: WARN
   pattern:
     console: "%d{ISO8601} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
   file:
-    name: /var/log/audibleclone/application.log
+    name: /var/log/elmify/application.log
     max-size: 100MB                      # Rotate after 100MB
     max-history: 30                      # Keep 30 days of logs
 ```
@@ -757,7 +757,7 @@ audibleclone:
 ```java
 @Service
 public class AudioService {
-    @Value("${audibleclone.features.new-audio-player}")
+    @Value("${elmify.features.new-audio-player}")
     private boolean useNewPlayer;
 
     public void playAudio() {
@@ -939,7 +939,7 @@ private String activeProfile;
 
 **Read custom property:**
 ```java
-@Value("${audibleclone.r2.bucket-name}")
+@Value("${elmify.r2.bucket-name}")
 private String bucketName;
 ```
 

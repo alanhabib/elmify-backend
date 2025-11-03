@@ -106,7 +106,7 @@ public Lecture getLecture(@PathVariable Long id) {
 ```
 org.hibernate.LazyInitializationException:
 failed to lazily initialize a collection of role:
-com.audibleclone.backend.entity.Lecture.speaker,
+com.elmify.backend.entity.Lecture.speaker,
 could not initialize proxy - no Session
 ```
 

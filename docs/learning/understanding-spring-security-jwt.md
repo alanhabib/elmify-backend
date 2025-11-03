@@ -504,7 +504,7 @@ Result: ❌ 403 Forbidden
 
 **ClerkJwtDecoder.java (lines 23-25):**
 ```java
-public ClerkJwtDecoder(@Value("${audibleclone.clerk.jwt-issuer}") String clerkIssuer) {
+public ClerkJwtDecoder(@Value("${elmify.clerk.jwt-issuer}") String clerkIssuer) {
     this.jwtDecoder = createJwtDecoder(clerkIssuer);
 }
 ```

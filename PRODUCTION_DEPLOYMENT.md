@@ -74,7 +74,7 @@ PORT=8080
 
 ### 2. Run with Production Profile
 ```bash
-java -jar -Dspring.profiles.active=prod target/audibleclone-backend-*.jar
+java -jar -Dspring.profiles.active=prod target/elmify-backend-*.jar
 ```
 
 ### 3. Verify Health Checks
@@ -127,7 +127,7 @@ services:
   postgres:
     image: postgres:15
     environment:
-      POSTGRES_DB: audibleclone
+      POSTGRES_DB: elmify
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:

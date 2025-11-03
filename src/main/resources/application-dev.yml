@@ -40,17 +40,17 @@ server:
 # Enhanced logging for development
 logging:
   level:
-    com.audibleclone: DEBUG
+    com.elmify: DEBUG
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type: TRACE
     org.springframework.transaction: DEBUG
   file:
-    name: logs/audibleclone-dev.log
+    name: logs/elmify-dev.log
 
 # Development-specific configuration
-audibleclone:
+elmify:
   cors:
     allowed-origins: "*"  # Allow all origins in development
   

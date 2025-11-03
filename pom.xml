@@ -12,11 +12,11 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.audibleclone</groupId>
-    <artifactId>audibleclone-backend</artifactId>
+    <groupId>com.elmify</groupId>
+    <artifactId>elmify-backend</artifactId>
     <version>1.0.0</version>
-    <name>AudibleClone Backend</name>
-    <description>Spring Boot backend for AudibleClone migrated from Cloudflare Workers</description>
+    <name>Elmify</name>
+    <description>Spring Boot backend for Elmify audio application</description>
 
     <properties>
         <java.version>21</java.version>
@@ -204,7 +204,7 @@
                         </exclude>
                     </excludes>
                     <jvmArguments>--enable-preview</jvmArguments>
-                    <mainClass>com.audibleclone.backend.AudibleCloneBackendApplication</mainClass>
+                    <mainClass>com.elmify.backend.ElmifyApplication</mainClass>
                 </configuration>
             </plugin>
 

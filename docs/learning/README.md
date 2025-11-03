@@ -1,6 +1,8 @@
 # Learning Resources Index
 
-Welcome to your personal learning documentation! This directory contains detailed, beginner-friendly explanations of key concepts used in the AudibleClone application. Each guide uses real examples from your codebase to help you understand how everything works together.
+Welcome to your personal learning documentation! This directory contains detailed, beginner-friendly explanations of 
+key concepts used in the Elmify application. Each guide uses real examples from your codebase to help you understand 
+how everything works together.
 
 ---
 

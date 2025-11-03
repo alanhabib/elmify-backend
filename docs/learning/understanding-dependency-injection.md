@@ -764,14 +764,14 @@ public class AudibleCloneBackendApplication {
 
 ```
 @ComponentScan starts from:
-com.audibleclone.backend (package of main class)
+com.elmify.backend (package of main class)
 
 Scans all sub-packages:
-├── com.audibleclone.backend.controller   ← @RestController
-├── com.audibleclone.backend.service      ← @Service
-├── com.audibleclone.backend.repository   ← @Repository
-├── com.audibleclone.backend.config       ← @Configuration
-└── com.audibleclone.backend.security     ← @Component
+├── com.elmify.backend.controller   ← @RestController
+├── com.elmify.backend.service      ← @Service
+├── com.elmify.backend.repository   ← @Repository
+├── com.elmify.backend.config       ← @Configuration
+└── com.elmify.backend.security     ← @Component
 ```
 
 **All classes with these annotations become beans:**
@@ -785,7 +785,7 @@ Scans all sub-packages:
 ```java
 @SpringBootApplication
 @ComponentScan(basePackages = {
-    "com.audibleclone.backend",
+    "com.elmifynd",
     "com.example.shared"  // Additional package
 })
 public class AudibleCloneBackendApplication {
@@ -797,10 +797,10 @@ public class AudibleCloneBackendApplication {
 ```java
 @SpringBootApplication
 @ComponentScan(
-    basePackages = "com.audibleclone.backend",
+    basePackages = "com.elmifynd",
     excludeFilters = @ComponentScan.Filter(
         type = FilterType.REGEX,
-        pattern = "com.audibleclone.backend.legacy.*"
+        pattern = "com.elmifynd.legacy.*"
     )
 )
 public class AudibleCloneBackendApplication {
@@ -959,7 +959,7 @@ public class OrderService {
 
 **Error:**
 ```
-No qualifying bean of type 'com.audibleclone.backend.service.LectureService' available
+No qualifying bean of type 'com.elmify.backend.service.LectureService' available
 ```
 
 **Causes:**

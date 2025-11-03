@@ -1,0 +1,27 @@
+# Build artifacts
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# MinIO data (development only - exclude from git)
+start/
+
+# Environment files
+.env
+.env.local

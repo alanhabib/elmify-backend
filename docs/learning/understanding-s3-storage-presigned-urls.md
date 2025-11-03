@@ -491,12 +491,12 @@ public class StorageService {
     private final Duration presignedUrlExpiration;
 
     public StorageService(
-        @Value("${audibleclone.r2.endpoint}") String endpoint,
-        @Value("${audibleclone.r2.access-key}") String accessKey,
-        @Value("${audibleclone.r2.secret-key}") String secretKey,
-        @Value("${audibleclone.r2.region}") String region,
-        @Value("${audibleclone.r2.bucket-name}") String bucketName,
-        @Value("${audibleclone.r2.presigned-url-expiration}") Duration presignedUrlExpiration) {
+        @Value("${elmify.r2.endpoint}") String endpoint,
+        @Value("${elmify.r2.access-key}") String accessKey,
+        @Value("${elmify.r2.secret-key}") String secretKey,
+        @Value("${elmify.r2.region}") String region,
+        @Value("${elmify.r2.bucket-name}") String bucketName,
+        @Value("${elmify.r2.presigned-url-expiration}") Duration presignedUrlExpiration) {
 
         this.bucketName = bucketName;
         this.presignedUrlExpiration = presignedUrlExpiration;
