@@ -1,6 +1,6 @@
 # Multi-Stage structure
 # Stage 1 
-FROM eclipse-temurin:21-jdk AS builder
+FROM maven:3.9-eclipse-temurin-21 AS builder
 WORKDIR /app
 # We copy and run these below steps separately because of Docker layer caching.
 COPY pom.xml .
