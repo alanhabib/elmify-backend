@@ -22,10 +22,8 @@ spring:
         jdbc:
           batch_size: 50
         cache:
-          use_second_level_cache: true
-          use_query_cache: true
-          region:
-            factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+          use_second_level_cache: false
+          use_query_cache: false
   
   flyway:
     enabled: false
