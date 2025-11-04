@@ -10,7 +10,7 @@ SET row_security = off;
 
 -- Table Definitions
 CREATE TABLE speakers (
-  id SERIAL PRIMARY KEY,
+  id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -22,8 +22,8 @@ CREATE TABLE speakers (
 );
 
 CREATE TABLE collections (
-  id SERIAL PRIMARY KEY,
-  speaker_id INTEGER NOT NULL REFERENCES speakers(id) ON DELETE CASCADE,
+  id BIGSERIAL PRIMARY KEY,
+  speaker_id BIGINT NOT NULL REFERENCES speakers(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   year INTEGER,
   cover_image_url TEXT,
@@ -34,7 +34,7 @@ CREATE TABLE collections (
 );
 
 CREATE TABLE lectures (
-  id SERIAL PRIMARY KEY,
+  id BIGSERIAL PRIMARY KEY,
   user_id INTEGER,
   directory_id INTEGER,
   title TEXT NOT NULL,
@@ -58,32 +58,32 @@ CREATE TABLE lectures (
   last_played_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  speaker_id INTEGER REFERENCES speakers(id) ON DELETE CASCADE,
-  collection_id INTEGER REFERENCES collections(id) ON DELETE CASCADE,
+  speaker_id BIGINT REFERENCES speakers(id) ON DELETE CASCADE,
+  collection_id BIGINT REFERENCES collections(id) ON DELETE CASCADE,
   description TEXT,
   lecture_number integer
 );
 
 CREATE TABLE user_saved_lectures (
   user_id TEXT NOT NULL,
-  lecture_id INTEGER NOT NULL REFERENCES lectures(id) ON DELETE CASCADE,
+  lecture_id BIGINT NOT NULL REFERENCES lectures(id) ON DELETE CASCADE,
   created_at INTEGER NOT NULL DEFAULT (extract(epoch from now())),
   PRIMARY KEY (user_id, lecture_id)
 );
 
 CREATE TABLE playback_positions (
-  id SERIAL PRIMARY KEY,
+  id BIGSERIAL PRIMARY KEY,
   user_id TEXT NOT NULL,
-  lecture_id INTEGER NOT NULL REFERENCES lectures(id) ON DELETE CASCADE,
+  lecture_id BIGINT NOT NULL REFERENCES lectures(id) ON DELETE CASCADE,
   current_position INTEGER NOT NULL DEFAULT 0,
   last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, lecture_id)
 );
 
 CREATE TABLE listening_stats (
-  id SERIAL PRIMARY KEY,
+  id BIGSERIAL PRIMARY KEY,
   user_id TEXT NOT NULL,
-  lecture_id INTEGER NOT NULL REFERENCES lectures(id) ON DELETE CASCADE,
+  lecture_id BIGINT NOT NULL REFERENCES lectures(id) ON DELETE CASCADE,
   date DATE NOT NULL,
   total_play_time INTEGER DEFAULT 0,
   play_count INTEGER DEFAULT 0,
@@ -110,9 +110,9 @@ CREATE TABLE user_daily_goals (
 );
 
 CREATE TABLE lecture_play_credits (
-  id SERIAL PRIMARY KEY,
+  id BIGSERIAL PRIMARY KEY,
   user_id TEXT NOT NULL,
-  lecture_id INTEGER NOT NULL REFERENCES lectures(id) ON DELETE CASCADE,
+  lecture_id BIGINT NOT NULL REFERENCES lectures(id) ON DELETE CASCADE,
   day INTEGER NOT NULL,
   played_at TIMESTAMP NOT NULL,
   created_at TIMESTAMP

@@ -3,7 +3,7 @@
 
 -- Step 1: Create the new 'users' table
 CREATE TABLE IF NOT EXISTS users (
-  id SERIAL PRIMARY KEY,
+  id BIGSERIAL PRIMARY KEY,
   clerk_id TEXT NOT NULL UNIQUE,
   email TEXT UNIQUE,
   display_name TEXT,
@@ -76,30 +76,30 @@ DROP VIEW IF EXISTS daily_progress CASCADE;
 -- Step 4: Now safely modify the tables
 -- Table: user_saved_lectures
 ALTER TABLE user_saved_lectures DROP COLUMN IF EXISTS user_id;
-ALTER TABLE user_saved_lectures ADD COLUMN user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE user_saved_lectures ADD COLUMN user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE user_saved_lectures DROP CONSTRAINT IF EXISTS user_saved_lectures_pkey;
 ALTER TABLE user_saved_lectures ADD PRIMARY KEY (user_id, lecture_id);
 
 -- Table: playback_positions
 ALTER TABLE playback_positions DROP COLUMN IF EXISTS user_id;
-ALTER TABLE playback_positions ADD COLUMN user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE playback_positions ADD COLUMN user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE playback_positions DROP CONSTRAINT IF EXISTS playback_positions_user_id_lecture_id_key;
 ALTER TABLE playback_positions ADD CONSTRAINT playback_positions_user_id_lecture_id_key UNIQUE (user_id, lecture_id);
 
 -- Table: listening_stats
 ALTER TABLE listening_stats DROP COLUMN IF EXISTS user_id;
-ALTER TABLE listening_stats ADD COLUMN user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE listening_stats ADD COLUMN user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE listening_stats DROP CONSTRAINT IF EXISTS listening_stats_user_id_lecture_id_date_key;
 ALTER TABLE listening_stats ADD CONSTRAINT listening_stats_user_id_lecture_id_date_key UNIQUE (user_id, lecture_id, date);
 
 -- Table: lecture_play_credits
 ALTER TABLE lecture_play_credits DROP COLUMN IF EXISTS user_id;
-ALTER TABLE lecture_play_credits ADD COLUMN user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE lecture_play_credits ADD COLUMN user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE;
 
 -- Table: user_daily_goals (special handling as user_id was the primary key)
 ALTER TABLE user_daily_goals RENAME COLUMN user_id TO clerk_id;
 ALTER TABLE user_daily_goals DROP CONSTRAINT IF EXISTS user_daily_goals_pkey;
-ALTER TABLE user_daily_goals ADD COLUMN user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE user_daily_goals ADD COLUMN user_id BIGINT UNIQUE REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE user_daily_goals ADD PRIMARY KEY (user_id);
 
 -- Step 4: Schema cleanup - remove redundant columns from lectures table
