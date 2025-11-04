@@ -67,7 +67,7 @@ CREATE TABLE lectures (
 CREATE TABLE user_saved_lectures (
   user_id TEXT NOT NULL,
   lecture_id BIGINT NOT NULL REFERENCES lectures(id) ON DELETE CASCADE,
-  created_at INTEGER NOT NULL DEFAULT (extract(epoch from now())),
+  created_at BIGINT NOT NULL DEFAULT (extract(epoch from now())),
   PRIMARY KEY (user_id, lecture_id)
 );
 
