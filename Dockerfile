@@ -1,0 +1,21 @@
+# Multi-Stage structure
+# Stage 1 
+FROM eclipse-temurin:21-jdk AS builder
+WORKDIR /app
+# We copy and run these below steps separately because of Docker layer caching.
+COPY pom.xml .
+RUN mvn dependency:go-offline
+
+COPY src ./src
+RUN mvn clean install -DskipTests
+
+
+# Stage 2 
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+
+COPY --from=builder /app/target/elmify-backend-1.0.0.jar app.jar
+
+EXPOSE 8080
+
+CMD ["java", "-jar", "app.jar"]
