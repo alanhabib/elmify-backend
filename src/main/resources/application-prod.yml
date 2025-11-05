@@ -5,6 +5,7 @@ spring:
     url: ${DATABASE_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+
     hikari:
       connection-timeout: 30000
       maximum-pool-size: 20
