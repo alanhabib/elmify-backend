@@ -30,6 +30,9 @@ spring:
     clean-disabled: true
     validate-on-migrate: true
 
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
 # Production server configuration
 server:
   port: ${PORT:8080}

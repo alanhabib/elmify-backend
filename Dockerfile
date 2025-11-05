@@ -18,4 +18,4 @@ COPY --from=builder /app/target/elmify-backend-1.0.0.jar app.jar
 
 EXPOSE 8080
 
-CMD ["java", "-jar", "app.jar"]
+CMD ["java", "-Xmx512m", "-Xms256m", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
