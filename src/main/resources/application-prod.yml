@@ -63,19 +63,17 @@ elmify:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:https://your-react-native-app.com}
   
   r2:
-    # Production R2 configuration
-    endpoint: https://b995be98e08909685abfca00c971e79e.r2.cloudflarestorage.com
-    bucket-name: elmify-audio
+    endpoint: ${R2_ENDPOINT:https://b995be98e08909685abfca00c971e79e.r2.cloudflarestorage.com}
+    bucket-name: ${R2_BUCKET_NAME:elmify-audio}
     access-key: ${R2_ACCESS_KEY}
     secret-key: ${R2_SECRET_KEY}
-    region: auto
-    presigned-url-expiration: PT30M  # 30 minutes in production
-  
+    region: ${R2_REGION:auto}
+    presigned-url-expiration: PT1H  # 1 hour
+
   clerk:
     secret-key: ${CLERK_SECRET_KEY}
     publishable-key: ${CLERK_PUBLISHABLE_KEY}
     jwt-issuer: ${CLERK_JWT_ISSUER}
-
 # Production monitoring
 management:
   endpoints:

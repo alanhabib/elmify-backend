@@ -92,16 +92,3 @@ elmify:
   
   security:
     admin-emails: ${ADMIN_EMAILS:dalanhabib@gmail.com}
-  
-  r2:
-    endpoint: ${R2_ENDPOINT:https://b995be98e08909685abfca00c971e79e.r2.cloudflarestorage.com}
-    bucket-name: ${R2_BUCKET_NAME:elmify-audio}
-    access-key: ${R2_ACCESS_KEY}
-    secret-key: ${R2_SECRET_KEY}
-    region: ${R2_REGION:auto}
-    presigned-url-expiration: PT1H  # 1 hour
-  
-  clerk:
-    secret-key: ${CLERK_SECRET_KEY}
-    publishable-key: ${CLERK_PUBLISHABLE_KEY}
-    jwt-issuer: ${CLERK_JWT_ISSUER:https://strong-bison-1.clerk.accounts.dev}
