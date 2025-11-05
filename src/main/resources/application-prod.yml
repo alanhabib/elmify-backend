@@ -54,6 +54,8 @@ logging:
     root: WARN
     com.elmify: INFO
     org.springframework.security: WARN
+    org.springframework.boot.web.embedded.tomcat: INFO
+    org.springframework.web: INFO
   pattern:
     console: "%d{ISO8601} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
   file:
