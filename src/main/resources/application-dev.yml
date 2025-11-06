@@ -17,6 +17,11 @@ spring:
       idle-timeout: 300000
       max-lifetime: 1200000
       auto-commit: true
+
+  # Auto-create database if it doesn't exist (development only)
+  sql:
+    init:
+      mode: never  # Flyway handles schema creation
   
   jpa:
     show-sql: true
