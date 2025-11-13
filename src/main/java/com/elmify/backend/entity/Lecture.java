@@ -171,4 +171,14 @@ public class Lecture {
             return (fileSize / (1024L * 1024 * 1024)) + " GB";
         }
     }
+
+    /**
+     * Check if this lecture is premium by checking if its speaker is premium.
+     * Lectures inherit premium status from their speaker.
+     *
+     * @return true if the speaker is premium, false otherwise
+     */
+    public boolean isPremium() {
+        return speaker != null && speaker.getIsPremium() != null && speaker.getIsPremium();
+    }
 }

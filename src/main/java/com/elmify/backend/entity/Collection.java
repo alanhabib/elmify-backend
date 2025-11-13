@@ -90,4 +90,14 @@ public class Collection {
     public String getSpeakerName() {
         return speaker != null ? speaker.getName() : null;
     }
+
+    /**
+     * Check if this collection is premium by checking if its speaker is premium.
+     * Collections inherit premium status from their speaker.
+     *
+     * @return true if the speaker is premium, false otherwise
+     */
+    public boolean isPremium() {
+        return speaker != null && speaker.getIsPremium() != null && speaker.getIsPremium();
+    }
 }
