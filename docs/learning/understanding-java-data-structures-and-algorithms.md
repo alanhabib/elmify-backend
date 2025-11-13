@@ -51,78 +51,953 @@ Different operations are faster with different structures:
 
 ### What is Big O?
 
-**Big O notation** describes how the runtime or memory usage grows as the input size grows.
+**Big O notation** is a mathematical notation that describes how the runtime or memory usage of an algorithm grows as the input size grows.
 
-### Common Big O Complexities
+**Think of it as:** A way to measure how efficient your code is, especially as your data gets larger.
+
+### Why Big O Matters
 
 ```
-O(1)        Constant     - Same time regardless of size
-O(log n)    Logarithmic  - Doubles input, adds one operation
-O(n)        Linear       - Double input, double time
-O(n log n)  Linearithmic - Efficient sorting algorithms
-O(n²)       Quadratic    - Nested loops over data
-O(2ⁿ)       Exponential  - Avoid this!
+Imagine searching for a name in a phone book:
+
+Method 1: Check every page from start to finish
+- 1,000 pages? Check 1,000 pages
+- 10,000 pages? Check 10,000 pages
+- This is O(n) - linear time
+
+Method 2: Open to middle, check if target is before/after, repeat
+- 1,000 pages? Check ~10 pages
+- 10,000 pages? Check ~13 pages
+- This is O(log n) - logarithmic time
+
+Same problem, HUGE difference in efficiency!
 ```
 
-### Visual Comparison
+### What Does Big O Measure?
+
+Big O measures **two things:**
+
+1. **Time Complexity** - How runtime increases with input size
+2. **Space Complexity** - How memory usage increases with input size
+
+**Important:** Big O describes the **worst-case scenario** (unless otherwise specified)
+
+---
+
+## Understanding Big O - Step by Step
+
+### The Basic Idea
+
+Big O notation answers: **"If I double my input size, what happens to my runtime?"**
+
+| Notation | Name | What happens when you double input? | Example |
+|----------|------|-------------------------------------|---------|
+| O(1) | Constant | Nothing - same time | Array access |
+| O(log n) | Logarithmic | Adds 1 operation | Binary search |
+| O(n) | Linear | Doubles | Loop through array |
+| O(n log n) | Linearithmic | ~Doubles + bit more | Merge sort |
+| O(n²) | Quadratic | 4x slower | Nested loops |
+| O(2ⁿ) | Exponential | Squares the time | Recursive fibonacci |
+
+### Visual Growth Chart
+
+```
+Number of Operations
+
+│ O(2ⁿ)
+│                                                              ╱
+│                                                         ╱╱╱╱
+│ O(n²)                                              ╱╱╱╱
+│                                   ╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱
+│ O(n log n)         ╱╱╱╱╱╱╱╱╱╱╱╱╱╱
+│ O(n)        ╱╱╱╱╱╱╱
+│ O(log n) ─╱─
+│ O(1) ───────────────────────────────────────────────────
+└────────────────────────────────────────────────────────> Input Size (n)
+```
+
+### Performance Comparison Table
 
 ```
 Operations needed for different input sizes:
 
-Input Size (n)     10        100       1,000     10,000
-─────────────────────────────────────────────────────────
-O(1)               1         1         1         1
-O(log n)           3         7         10        13
-O(n)               10        100       1,000     10,000
-O(n log n)         30        700       10,000    130,000
-O(n²)              100       10,000    1,000,000 100,000,000
-O(2ⁿ)              1,024     FOREVER   FOREVER   FOREVER
+Input Size (n)     10        100       1,000       10,000      1,000,000
+──────────────────────────────────────────────────────────────────────────
+O(1)               1         1         1           1           1
+O(log n)           3         7         10          13          20
+O(n)               10        100       1,000       10,000      1,000,000
+O(n log n)         30        664       9,966       132,877     19,931,569
+O(n²)              100       10,000    1,000,000   100,000,000 1,000,000,000,000
+O(2ⁿ)              1,024     ∞         ∞           ∞           ∞
 ```
 
-### Real-World Examples
+**Key Insight:** O(n²) with 1 million items = 1 trillion operations! 💥
 
-**O(1) - Constant Time:**
+---
+
+## How to Calculate Big O - The Rules
+
+### Rule 1: Drop Constants
+
+**Big O cares about growth rate, not exact operations**
+
 ```java
-// Accessing an array element by index
-List<Lecture> lectures = getLectures();
-Lecture first = lectures.get(0);  // O(1) - instant access
-
-// HashMap lookup by key
-Map<Long, Lecture> lectureMap = new HashMap<>();
-Lecture lecture = lectureMap.get(5L);  // O(1) - instant lookup
-```
-
-**O(n) - Linear Time:**
-```java
-// Iterating through all elements
-List<Lecture> lectures = getLectures();
-for (Lecture lecture : lectures) {  // O(n) - visits each element once
-    System.out.println(lecture.getTitle());
+// Even though this has 3 operations, it's still O(1)
+public int getFirst(int[] arr) {
+    int first = arr[0];        // Operation 1
+    int doubled = first * 2;   // Operation 2
+    return doubled;            // Operation 3
 }
-
-// Searching for an element
-boolean found = lectures.stream()
-    .anyMatch(l -> l.getId() == 5);  // O(n) - might check all elements
+// Still O(1) because it doesn't depend on input size!
 ```
 
-**O(log n) - Logarithmic Time:**
 ```java
-// Binary search in a sorted list
-Collections.binarySearch(sortedLectures, targetLecture);  // O(log n)
-// 1,000 elements? Only checks ~10 elements!
-// 1,000,000 elements? Only checks ~20 elements!
-```
-
-**O(n²) - Quadratic Time:**
-```java
-// Nested loops - AVOID when possible!
-List<Lecture> lectures = getLectures();
-for (Lecture lecture1 : lectures) {           // O(n)
-    for (Lecture lecture2 : lectures) {       // O(n)
-        // Compare every lecture with every other lecture
-        // 100 lectures = 10,000 comparisons!
+// Even with 2 loops, it's O(n), not O(2n)
+public void printTwice(int[] arr) {
+    for (int num : arr) {      // O(n)
+        System.out.println(num);
+    }
+    for (int num : arr) {      // O(n)
+        System.out.println(num);
     }
 }
+// Total: O(n) + O(n) = O(2n) → Drop constant → O(n)
+```
+
+**Why?** When n = 1,000,000, the difference between 1,000,000 and 2,000,000 operations doesn't matter compared to the difference between 1,000,000 and 1,000,000,000,000 operations.
+
+### Rule 2: Drop Non-Dominant Terms
+
+**Keep only the fastest-growing term**
+
+```java
+public void example(int[] arr) {
+    // Part 1: O(n)
+    for (int i = 0; i < arr.length; i++) {
+        System.out.println(arr[i]);
+    }
+
+    // Part 2: O(n²)
+    for (int i = 0; i < arr.length; i++) {
+        for (int j = 0; j < arr.length; j++) {
+            System.out.println(arr[i] + arr[j]);
+        }
+    }
+}
+// Total: O(n) + O(n²) = O(n² + n) → Drop n → O(n²)
+```
+
+**Why?** When n = 1000:
+- n = 1,000
+- n² = 1,000,000
+
+The n² dominates so much that n becomes irrelevant!
+
+### Rule 3: Different Inputs = Different Variables
+
+```java
+public void printBoth(int[] arr1, int[] arr2) {
+    for (int num : arr1) {        // O(a) where a = arr1.length
+        System.out.println(num);
+    }
+    for (int num : arr2) {        // O(b) where b = arr2.length
+        System.out.println(num);
+    }
+}
+// Total: O(a + b), NOT O(n)
+```
+
+### Rule 4: Nested = Multiply, Sequential = Add
+
+**Sequential (one after another) = ADD**
+```java
+public void sequential(int[] arr) {
+    for (int i = 0; i < arr.length; i++) {     // O(n)
+        System.out.println(arr[i]);
+    }
+    for (int i = 0; i < arr.length; i++) {     // O(n)
+        System.out.println(arr[i]);
+    }
+}
+// O(n) + O(n) = O(n)
+```
+
+**Nested (one inside another) = MULTIPLY**
+```java
+public void nested(int[] arr) {
+    for (int i = 0; i < arr.length; i++) {     // O(n)
+        for (int j = 0; j < arr.length; j++) { // O(n)
+            System.out.println(arr[i] + arr[j]);
+        }
+    }
+}
+// O(n) * O(n) = O(n²)
+```
+
+---
+
+## Step-by-Step Big O Analysis Examples
+
+### Example 1: Simple Loop
+
+```java
+public int sum(int[] arr) {
+    int total = 0;                    // O(1) - one operation
+    for (int i = 0; i < arr.length; i++) {  // Loops n times
+        total += arr[i];              // O(1) - one operation per loop
+    }
+    return total;                     // O(1) - one operation
+}
+```
+
+**Analysis:**
+1. `int total = 0` → O(1)
+2. Loop runs `n` times → O(n)
+3. Inside loop: `total += arr[i]` → O(1) per iteration
+4. `return total` → O(1)
+
+**Total:** O(1) + O(n * 1) + O(1) = O(n + 2) → Drop constants → **O(n)**
+
+### Example 2: Nested Loops
+
+```java
+public void printPairs(int[] arr) {
+    for (int i = 0; i < arr.length; i++) {     // Loops n times
+        for (int j = 0; j < arr.length; j++) { // Loops n times for each i
+            System.out.println(arr[i] + ", " + arr[j]);
+        }
+    }
+}
+```
+
+**Analysis:**
+1. Outer loop: runs `n` times
+2. Inner loop: runs `n` times for EACH iteration of outer loop
+3. Total iterations: n × n = n²
+
+**Total:** **O(n²)**
+
+**Concrete example:** If array has 5 elements:
+- Outer loop: 5 iterations
+- Inner loop: 5 iterations per outer
+- Total prints: 5 × 5 = 25
+
+### Example 3: Two Separate Loops
+
+```java
+public void printArrays(int[] arr1, int[] arr2) {
+    for (int num : arr1) {       // O(a) where a = arr1.length
+        System.out.println(num);
+    }
+
+    for (int num : arr2) {       // O(b) where b = arr2.length
+        System.out.println(num);
+    }
+}
+```
+
+**Analysis:**
+1. First loop: runs `a` times (length of arr1)
+2. Second loop: runs `b` times (length of arr2)
+3. They're sequential, not nested, so we ADD
+
+**Total:** **O(a + b)**
+
+**Common mistake:** Don't say O(n) because there are two different inputs!
+
+### Example 4: Nested Loops with Different Arrays
+
+```java
+public void printPairs(int[] arr1, int[] arr2) {
+    for (int num1 : arr1) {      // O(a)
+        for (int num2 : arr2) {  // O(b)
+            System.out.println(num1 + ", " + num2);
+        }
+    }
+}
+```
+
+**Analysis:**
+1. Outer loop: runs `a` times
+2. Inner loop: runs `b` times for each outer iteration
+3. They're nested, so we MULTIPLY
+
+**Total:** **O(a × b)**
+
+### Example 5: Partial Loop
+
+```java
+public void printHalf(int[] arr) {
+    for (int i = 0; i < arr.length / 2; i++) {
+        System.out.println(arr[i]);
+    }
+}
+```
+
+**Analysis:**
+1. Loop runs n/2 times
+2. n/2 = (1/2) × n
+3. Drop constant (1/2)
+
+**Total:** O(n/2) → Drop constant → **O(n)**
+
+### Example 6: Binary Search (The Tricky One!)
+
+```java
+public int binarySearch(int[] arr, int target) {
+    int left = 0;
+    int right = arr.length - 1;
+
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+
+        if (arr[mid] == target) {
+            return mid;
+        } else if (arr[mid] < target) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return -1;
+}
+```
+
+**Analysis:**
+1. Each iteration divides the search space in half
+2. Start: n elements
+3. After 1st iteration: n/2 elements
+4. After 2nd iteration: n/4 elements
+5. After 3rd iteration: n/8 elements
+6. Continue until 1 element remains
+
+**How many times can you divide n by 2 until you get 1?**
+- n / 2 / 2 / 2 / ... = 1
+- This is log₂(n)!
+
+**Total:** **O(log n)**
+
+**Proof:**
+- n = 1000 → 1000, 500, 250, 125, 62, 31, 15, 7, 3, 1 (10 steps)
+- log₂(1000) ≈ 10 ✓
+
+### Example 7: Nested Loops with Dependencies
+
+```java
+public void printTriangle(int[] arr) {
+    for (int i = 0; i < arr.length; i++) {
+        for (int j = 0; j < i; j++) {  // Notice: j < i, not j < arr.length
+            System.out.println(arr[i] + ", " + arr[j]);
+        }
+    }
+}
+```
+
+**Analysis:**
+1. Outer loop: n iterations
+2. Inner loop iterations depend on i:
+   - When i=0: 0 iterations
+   - When i=1: 1 iteration
+   - When i=2: 2 iterations
+   - ...
+   - When i=n-1: n-1 iterations
+3. Total: 0 + 1 + 2 + 3 + ... + (n-1) = n(n-1)/2 = (n² - n)/2
+
+**Total:** O(n²/2 - n/2) → Drop constants and non-dominant → **O(n²)**
+
+### Example 8: Multiple Operations
+
+```java
+public void complex(int[] arr) {
+    // Part 1: O(1)
+    int first = arr[0];
+    int last = arr[arr.length - 1];
+
+    // Part 2: O(n)
+    for (int i = 0; i < arr.length; i++) {
+        System.out.println(arr[i]);
+    }
+
+    // Part 3: O(n²)
+    for (int i = 0; i < arr.length; i++) {
+        for (int j = 0; j < arr.length; j++) {
+            System.out.println(arr[i] + arr[j]);
+        }
+    }
+
+    // Part 4: O(n)
+    for (int i = 0; i < arr.length; i++) {
+        System.out.println(arr[i]);
+    }
+}
+```
+
+**Analysis:**
+1. Part 1: O(1)
+2. Part 2: O(n)
+3. Part 3: O(n²)
+4. Part 4: O(n)
+
+**Total:** O(1) + O(n) + O(n²) + O(n) = O(n² + 2n + 1)
+
+**Simplify:**
+- Drop constants: O(n² + 2n + 1) → O(n² + n)
+- Drop non-dominant: O(n² + n) → **O(n²)**
+
+**Key insight:** The nested loop (O(n²)) dominates everything else!
+
+---
+
+## Common Big O Complexities Explained
+
+### O(1) - Constant Time ⚡
+
+**"No matter how big the input, it takes the same time"**
+
+```java
+// Examples of O(1) operations:
+
+public int getElement(int[] arr, int index) {
+    return arr[index];  // Direct access - always one step
+}
+
+public void addToHashMap(Map<Integer, String> map, int key, String value) {
+    map.put(key, value);  // Average O(1)
+}
+
+public int getFirst(List<Integer> list) {
+    return list.get(0);  // First element - always one step
+}
+
+public void swap(int[] arr, int i, int j) {
+    int temp = arr[i];  // O(1)
+    arr[i] = arr[j];    // O(1)
+    arr[j] = temp;      // O(1)
+    // Total: O(1) even with multiple operations
+}
+```
+
+**Visual:**
+```
+Input size: 10 → 1 operation
+Input size: 1,000 → 1 operation
+Input size: 1,000,000 → 1 operation
+```
+
+### O(log n) - Logarithmic Time 📊
+
+**"Dividing the problem in half each time"**
+
+```java
+// Binary search - halves the search space each iteration
+public int binarySearch(int[] arr, int target) {
+    int left = 0, right = arr.length - 1;
+
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        if (arr[mid] == target) return mid;
+        if (arr[mid] < target) left = mid + 1;
+        else right = mid - 1;
+    }
+    return -1;
+}
+
+// Finding element in balanced BST
+public TreeNode search(TreeNode root, int value) {
+    if (root == null || root.value == value) return root;
+    if (value < root.value) return search(root.left, value);
+    return search(root.right, value);
+}
+```
+
+**Why O(log n)?**
+```
+Search in array of 1,000 elements:
+1000 → 500 → 250 → 125 → 62 → 31 → 15 → 7 → 3 → 1
+That's about 10 steps for 1,000 elements!
+
+log₂(1,000) ≈ 10
+```
+
+**Visual:**
+```
+Input size: 8 → 3 operations (8→4→2→1)
+Input size: 16 → 4 operations (16→8→4→2→1)
+Input size: 1,024 → 10 operations
+Input size: 1,048,576 → 20 operations!
+```
+
+### O(n) - Linear Time 📈
+
+**"Visit each element once"**
+
+```java
+// Simple loop
+public int sum(int[] arr) {
+    int total = 0;
+    for (int num : arr) {  // Visits each element exactly once
+        total += num;
+    }
+    return total;
+}
+
+// Finding maximum
+public int findMax(int[] arr) {
+    int max = arr[0];
+    for (int num : arr) {  // O(n)
+        if (num > max) max = num;
+    }
+    return max;
+}
+
+// Two separate loops - still O(n)
+public void printTwice(int[] arr) {
+    for (int num : arr) System.out.println(num);  // O(n)
+    for (int num : arr) System.out.println(num);  // O(n)
+    // Total: O(n) + O(n) = O(2n) → O(n)
+}
+```
+
+**Visual:**
+```
+Input size: 10 → 10 operations
+Input size: 100 → 100 operations
+Input size: 1,000 → 1,000 operations
+```
+
+### O(n log n) - Linearithmic Time 🎯
+
+**"Efficient sorting - best you can do for comparison-based sorting"**
+
+```java
+// Merge sort
+public void mergeSort(int[] arr, int left, int right) {
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+        mergeSort(arr, left, mid);      // T(n/2)
+        mergeSort(arr, mid + 1, right); // T(n/2)
+        merge(arr, left, mid, right);   // O(n)
+    }
+}
+// Each level is O(n), tree has log(n) levels
+// Total: O(n log n)
+
+// Quick sort (average case)
+// Heap sort
+```
+
+**Why n log n?**
+```
+Merge sort divides array log(n) times (like binary search)
+At each level, it merges all n elements
+Levels: log(n)
+Work per level: n
+Total: n × log(n) = O(n log n)
+```
+
+**Visual:**
+```
+Input size: 10 → ~30 operations
+Input size: 100 → ~664 operations
+Input size: 1,000 → ~10,000 operations
+```
+
+### O(n²) - Quadratic Time ⚠️
+
+**"Nested loops - check all pairs"**
+
+```java
+// Classic nested loops
+public void printAllPairs(int[] arr) {
+    for (int i = 0; i < arr.length; i++) {         // n times
+        for (int j = 0; j < arr.length; j++) {     // n times for each i
+            System.out.println(arr[i] + ", " + arr[j]);
+        }
+    }
+}
+// Total: n × n = n²
+
+// Bubble sort
+public void bubbleSort(int[] arr) {
+    for (int i = 0; i < arr.length; i++) {         // O(n)
+        for (int j = 0; j < arr.length - i - 1; j++) {  // O(n)
+            if (arr[j] > arr[j + 1]) {
+                swap(arr, j, j + 1);
+            }
+        }
+    }
+}
+// O(n²)
+
+// Finding duplicates (naive approach)
+public boolean hasDuplicate(int[] arr) {
+    for (int i = 0; i < arr.length; i++) {
+        for (int j = i + 1; j < arr.length; j++) {
+            if (arr[i] == arr[j]) return true;
+        }
+    }
+    return false;
+}
+// O(n²) - but can be O(n) with HashSet!
+```
+
+**Visual:**
+```
+Input size: 10 → 100 operations
+Input size: 100 → 10,000 operations
+Input size: 1,000 → 1,000,000 operations (😱)
+```
+
+### O(2ⁿ) - Exponential Time 💀
+
+**"AVOID AT ALL COSTS - doubles with each additional input"**
+
+```java
+// Naive recursive Fibonacci
+public int fibonacci(int n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+// Each call makes 2 more calls → exponential growth!
+
+// Trying all subsets
+public List<List<Integer>> subsets(int[] nums) {
+    // Generates 2ⁿ subsets
+    // [1,2,3] → 2³ = 8 subsets
+}
+```
+
+**Why so bad?**
+```
+fibonacci(5) calls:
+                    fib(5)
+                   /      \
+              fib(4)      fib(3)
+             /    \        /    \
+        fib(3)  fib(2)  fib(2) fib(1)
+       /   \    /   \    /  \
+   fib(2) fib(1) ...  ... ... ...
+
+Total calls: 1 + 2 + 4 + 8 + 16 = 31 calls for just n=5!
+```
+
+**Visual:**
+```
+Input: 10 → 1,024 operations
+Input: 20 → 1,048,576 operations
+Input: 30 → 1,073,741,824 operations (over 1 billion!)
+Input: 50 → Would take years to complete! 💀
+```
+
+**How to fix:** Use memoization/dynamic programming to reduce to O(n)
+
+---
+
+## Space Complexity
+
+**Space complexity measures how much memory an algorithm uses**
+
+### Common Space Complexities
+
+**O(1) - Constant Space:**
+```java
+// Only uses a fixed amount of extra variables
+public int sum(int[] arr) {
+    int total = 0;  // O(1) space - one variable
+    for (int num : arr) {
+        total += num;
+    }
+    return total;
+}
+// Input array doesn't count as "extra" space
+```
+
+**O(n) - Linear Space:**
+```java
+// Creates a new array of size n
+public int[] doubleArray(int[] arr) {
+    int[] result = new int[arr.length];  // O(n) space
+    for (int i = 0; i < arr.length; i++) {
+        result[i] = arr[i] * 2;
+    }
+    return result;
+}
+
+// Recursive calls use stack space
+public int factorial(int n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
+}
+// Call stack depth = n → O(n) space
+```
+
+**O(n²) - Quadratic Space:**
+```java
+// 2D array
+public int[][] create2DArray(int n) {
+    int[][] matrix = new int[n][n];  // O(n²) space
+    return matrix;
+}
+```
+
+### Time vs Space Trade-offs
+
+**Often you can trade space for time:**
+
+```java
+// Fibonacci - O(2ⁿ) time, O(n) space (call stack)
+public int fibSlow(int n) {
+    if (n <= 1) return n;
+    return fibSlow(n - 1) + fibSlow(n - 2);
+}
+
+// Fibonacci with memoization - O(n) time, O(n) space
+public int fibFast(int n) {
+    return fibHelper(n, new HashMap<>());
+}
+
+private int fibHelper(int n, Map<Integer, Integer> memo) {
+    if (n <= 1) return n;
+    if (memo.containsKey(n)) return memo.get(n);
+
+    int result = fibHelper(n - 1, memo) + fibHelper(n - 2, memo);
+    memo.put(n, result);
+    return result;
+}
+// Used extra space (HashMap) to dramatically improve time!
+```
+
+---
+
+## Practice Problems - Calculate Big O
+
+### Problem 1
+```java
+public void mystery1(int[] arr) {
+    for (int i = 0; i < arr.length; i++) {
+        System.out.println(arr[i]);
+    }
+    for (int i = 0; i < arr.length; i++) {
+        System.out.println(arr[i]);
+    }
+}
+```
+<details>
+<summary>Answer</summary>
+
+**O(n)**
+- Two separate loops: O(n) + O(n) = O(2n) → O(n)
+</details>
+
+### Problem 2
+```java
+public void mystery2(int[] arr) {
+    for (int i = 0; i < arr.length; i++) {
+        for (int j = i; j < arr.length; j++) {
+            System.out.println(arr[i] + arr[j]);
+        }
+    }
+}
+```
+<details>
+<summary>Answer</summary>
+
+**O(n²)**
+- Outer loop: n times
+- Inner loop: starts at i, goes to n (still O(n) iterations on average)
+- Total: n × n = O(n²)
+</details>
+
+### Problem 3
+```java
+public int mystery3(int[] arr) {
+    if (arr.length == 0) return -1;
+    if (arr.length == 1) return arr[0];
+
+    int mid = arr.length / 2;
+    int[] left = Arrays.copyOfRange(arr, 0, mid);
+    return mystery3(left);
+}
+```
+<details>
+<summary>Answer</summary>
+
+**O(n log n)**
+- Each recursive call: Arrays.copyOfRange is O(n)
+- Number of recursive calls: log(n) (dividing in half)
+- Total: O(n log n)
+</details>
+
+### Problem 4
+```java
+public void mystery4(int n) {
+    for (int i = 1; i < n; i *= 2) {
+        System.out.println(i);
+    }
+}
+```
+<details>
+<summary>Answer</summary>
+
+**O(log n)**
+- Loop multiplies i by 2 each time (i = 1, 2, 4, 8, 16...)
+- How many times can you multiply by 2 before reaching n? log₂(n) times
+</details>
+
+### Problem 5
+```java
+public boolean mystery5(int[] arr, int target) {
+    Set<Integer> seen = new HashSet<>();
+    for (int num : arr) {
+        if (seen.contains(target - num)) {
+            return true;
+        }
+        seen.add(num);
+    }
+    return false;
+}
+```
+<details>
+<summary>Answer</summary>
+
+**O(n) time, O(n) space**
+- Loop runs n times: O(n)
+- HashSet operations (contains, add): O(1) average
+- Total time: O(n)
+- Space: HashSet stores up to n elements: O(n)
+</details>
+
+---
+
+## Big O Cheat Sheet
+
+### Common Data Structure Operations
+
+| Data Structure | Access | Search | Insertion | Deletion |
+|----------------|--------|--------|-----------|----------|
+| Array | O(1) | O(n) | O(n) | O(n) |
+| ArrayList | O(1) | O(n) | O(1) amortized | O(n) |
+| LinkedList | O(n) | O(n) | O(1) | O(1) |
+| Stack | O(n) | O(n) | O(1) | O(1) |
+| Queue | O(n) | O(n) | O(1) | O(1) |
+| HashMap | - | O(1) avg | O(1) avg | O(1) avg |
+| TreeMap | - | O(log n) | O(log n) | O(log n) |
+| HashSet | - | O(1) avg | O(1) avg | O(1) avg |
+| TreeSet | - | O(log n) | O(log n) | O(log n) |
+
+### Common Sorting Algorithms
+
+| Algorithm | Best | Average | Worst | Space |
+|-----------|------|---------|-------|-------|
+| Bubble Sort | O(n) | O(n²) | O(n²) | O(1) |
+| Selection Sort | O(n²) | O(n²) | O(n²) | O(1) |
+| Insertion Sort | O(n) | O(n²) | O(n²) | O(1) |
+| Merge Sort | O(n log n) | O(n log n) | O(n log n) | O(n) |
+| Quick Sort | O(n log n) | O(n log n) | O(n²) | O(log n) |
+| Heap Sort | O(n log n) | O(n log n) | O(n log n) | O(1) |
+
+### How to Recognize Big O
+
+| Code Pattern | Big O | How to spot it |
+|--------------|-------|----------------|
+| Single loop | O(n) | `for (int i = 0; i < n; i++)` |
+| Nested loops | O(n²) | Loop inside loop |
+| Halving each iteration | O(log n) | `i *= 2` or `i /= 2` |
+| Divide and conquer | O(n log n) | Recursively split + merge |
+| Trying all combinations | O(2ⁿ) | Recursive with 2 branches |
+| HashMap lookup | O(1) | `map.get(key)` |
+| Sorting then searching | O(n log n) | Sort first, then binary search |
+
+---
+
+## Real-World Examples
+
+### Example: Finding Duplicates
+
+**Bad Approach - O(n²):**
+```java
+public boolean hasDuplicate(int[] arr) {
+    for (int i = 0; i < arr.length; i++) {
+        for (int j = i + 1; j < arr.length; j++) {
+            if (arr[i] == arr[j]) return true;
+        }
+    }
+    return false;
+}
+// For 1000 elements: ~500,000 comparisons!
+```
+
+**Good Approach - O(n):**
+```java
+public boolean hasDuplicate(int[] arr) {
+    Set<Integer> seen = new HashSet<>();
+    for (int num : arr) {
+        if (seen.contains(num)) return true;  // O(1) lookup
+        seen.add(num);  // O(1) insertion
+    }
+    return false;
+}
+// For 1000 elements: ~1000 operations!
+```
+
+### Example: Two Sum Problem
+
+**Bad - O(n²):**
+```java
+public int[] twoSum(int[] nums, int target) {
+    for (int i = 0; i < nums.length; i++) {
+        for (int j = i + 1; j < nums.length; j++) {
+            if (nums[i] + nums[j] == target) {
+                return new int[]{i, j};
+            }
+        }
+    }
+    return null;
+}
+```
+
+**Good - O(n):**
+```java
+public int[] twoSum(int[] nums, int target) {
+    Map<Integer, Integer> map = new HashMap<>();
+    for (int i = 0; i < nums.length; i++) {
+        int complement = target - nums[i];
+        if (map.containsKey(complement)) {
+            return new int[]{map.get(complement), i};
+        }
+        map.put(nums[i], i);
+    }
+    return null;
+}
+```
+
+---
+
+## Summary
+
+### Key Takeaways
+
+1. **Big O measures growth rate** - How algorithm scales with input size
+2. **Drop constants and non-dominant terms** - O(2n) → O(n), O(n² + n) → O(n²)
+3. **Different inputs = different variables** - O(a + b), not O(n)
+4. **Nested loops multiply** - Two nested loops of n = O(n²)
+5. **Sequential operations add** - Two separate loops = O(n) + O(n) = O(n)
+
+### Priority Order (Best to Worst)
+
+```
+O(1) ⚡ > O(log n) 📊 > O(n) 📈 > O(n log n) 🎯 > O(n²) ⚠️ > O(2ⁿ) 💀
+```
+
+### Quick Decision Tree
+
+```
+Does runtime depend on input size?
+├─ No → O(1)
+└─ Yes → Does it loop through all elements?
+    ├─ Once → O(n)
+    ├─ Twice (nested) → O(n²)
+    └─ Dividing in half each time → O(log n)
 ```
 
 ---
