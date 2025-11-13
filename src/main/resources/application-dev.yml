@@ -37,6 +37,8 @@ spring:
   
   flyway:
     clean-disabled: false
+    enabled: true
+    baseline-on-migrate: true
 
 # Server configuration for development
 server:

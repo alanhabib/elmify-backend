@@ -34,6 +34,9 @@ public class Speaker {
     @Column(name = "name", nullable = false, unique = true)
     private String name;
 
+    @Column(name = "bio", columnDefinition = "TEXT")
+    private String bio;
+
     @Column(name = "image_url")
     private String imageUrl;
 
