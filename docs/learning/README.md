@@ -246,6 +246,35 @@ how everything works together.
 
 ---
 
+### **Programming Fundamentals**
+
+#### 11. [Understanding Java Data Structures and Algorithms](./understanding-java-data-structures-and-algorithms.md)
+**Topics Covered:**
+- Big O Notation and performance analysis
+- Arrays and ArrayLists (when to use each)
+- LinkedLists (advantages and trade-offs)
+- Stacks and Queues (LIFO vs FIFO)
+- HashMaps and HashSets (O(1) lookups, uniqueness)
+- Trees and Binary Search Trees
+- Sorting algorithms (Bubble, Selection, Insertion, Merge Sort, Quick Sort)
+- Searching algorithms (Linear Search, Binary Search)
+- Common algorithm patterns (Two Pointers, Sliding Window, Prefix Sum, Recursion, Backtracking)
+- Real examples from your codebase
+- When to use which data structure
+- Time and space complexity comparisons
+
+**When to Read:**
+- Before technical interviews
+- To understand algorithm efficiency and performance
+- When choosing the right data structure for a problem
+- To learn fundamental computer science concepts
+- When optimizing code performance
+- As a reference for common patterns and algorithms
+
+**Difficulty:** ⭐ Beginner to Intermediate (starts from basics)
+
+---
+
 ## 🎯 Recommended Learning Path
 
 ### For Complete Beginners to Spring Boot
@@ -452,9 +481,9 @@ If you encounter something confusing or would like a new topic explained:
 
 ## 📊 Guide Statistics
 
-**Total Guides:** 10 comprehensive guides ✅
+**Total Guides:** 11 comprehensive guides ✅
 
-**Total Content:** ~15,000+ lines of comprehensive documentation
+**Total Content:** ~17,000+ lines of comprehensive documentation
 
 **Coverage:**
 - ✅ Configuration & Profiles
