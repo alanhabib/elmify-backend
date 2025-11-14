@@ -14,6 +14,10 @@ import java.util.Optional;
 /**
  * Service layer for retrieving and interacting with Lecture entities.
  * This service is primarily read-only, with specific methods for user interactions.
+ *
+ * Premium Filtering:
+ * - All list endpoints filter out lectures from premium speakers for non-premium users
+ * - Single lecture retrieval checks premium access
  */
 @Service
 @Transactional(readOnly = true) // Default to read-only transactions for performance
@@ -21,14 +25,18 @@ import java.util.Optional;
 public class LectureService {
 
     private final LectureRepository lectureRepository;
+    private final PremiumFilterService premiumFilterService;
 
     /**
      * Retrieves a paginated list of all lectures with eagerly loaded related entities.
+     * Filters out premium lectures for non-premium users.
+     *
      * @param pageable Pagination information.
      * @return A Page of Lecture entities with speaker and collection loaded.
      */
     public Page<Lecture> getAllLectures(Pageable pageable) {
-        return lectureRepository.findAllWithSpeakerAndCollection(pageable);
+        Page<Lecture> lectures = lectureRepository.findAllWithSpeakerAndCollection(pageable);
+        return premiumFilterService.filterLectures(lectures, pageable);
     }
 
     /**
@@ -42,31 +50,40 @@ public class LectureService {
 
     /**
      * Retrieves a paginated list of all lectures belonging to a specific collection with eagerly loaded related entities.
+     * Filters out premium lectures for non-premium users.
+     *
      * @param collectionId The ID of the collection.
      * @param pageable Pagination information.
      * @return A Page of Lecture entities with speaker and collection loaded.
      */
     public Page<Lecture> getLecturesByCollectionId(Long collectionId, Pageable pageable) {
-        return lectureRepository.findByCollectionIdWithSpeakerAndCollection(collectionId, pageable);
+        Page<Lecture> lectures = lectureRepository.findByCollectionIdWithSpeakerAndCollection(collectionId, pageable);
+        return premiumFilterService.filterLectures(lectures, pageable);
     }
 
     /**
      * Retrieves a paginated list of all lectures belonging to a specific speaker.
+     * Filters out premium lectures for non-premium users.
+     *
      * @param speakerId The ID of the speaker.
      * @param pageable Pagination information.
      * @return A Page of Lecture entities.
      */
     public Page<Lecture> getLecturesBySpeakerId(Long speakerId, Pageable pageable) {
-        return lectureRepository.findBySpeakerIdWithSpeakerAndCollection(speakerId, pageable);
+        Page<Lecture> lectures = lectureRepository.findBySpeakerIdWithSpeakerAndCollection(speakerId, pageable);
+        return premiumFilterService.filterLectures(lectures, pageable);
     }
 
     /**
      * Retrieves trending lectures ordered by play count (most popular first).
+     * Filters out premium lectures for non-premium users.
+     *
      * @param pageable Pagination information.
      * @return A Page of Lecture entities ordered by popularity.
      */
     public Page<Lecture> getTrendingLectures(Pageable pageable) {
-        return lectureRepository.findAllOrderByPlayCountDesc(pageable);
+        Page<Lecture> lectures = lectureRepository.findAllOrderByPlayCountDesc(pageable);
+        return premiumFilterService.filterLectures(lectures, pageable);
     }
 
     /**
