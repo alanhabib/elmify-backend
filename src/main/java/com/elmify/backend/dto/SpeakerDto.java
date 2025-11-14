@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
  *
  * @param id The unique ID of the speaker.
  * @param name The name of the speaker.
+ * @param bio The biography or description of the speaker.
  * @param imageUrl URL for the main speaker image.
  * @param imageSmallUrl URL for the small/thumbnail speaker image.
  * @param isPremium The premium status of the speaker.
@@ -28,6 +29,7 @@ public record SpeakerDto(
         @Size(max = 255)
         String name,
 
+        String bio,
         String imageUrl,
         String imageSmallUrl,
         boolean isPremium,
@@ -50,6 +52,7 @@ public record SpeakerDto(
         return new SpeakerDto(
                 speaker.getId(),
                 speaker.getName(),
+                speaker.getBio(),
                 speaker.getImageUrl(),
                 speaker.getImageSmallUrl(),
                 speaker.getIsPremium(),
@@ -70,6 +73,7 @@ public record SpeakerDto(
         return new SpeakerDto(
                 speaker.getId(),
                 speaker.getName(),
+                speaker.getBio(),
                 convertToPresignedUrl(speaker.getImageUrl(), storageService),
                 convertToPresignedUrl(speaker.getImageSmallUrl(), storageService),
                 speaker.getIsPremium(),

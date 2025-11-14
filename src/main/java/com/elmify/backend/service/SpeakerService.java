@@ -41,6 +41,7 @@ public class SpeakerService {
         // The service is responsible for converting the DTO to an entity
         Speaker speaker = new Speaker();
         speaker.setName(speakerDto.name());
+        speaker.setBio(speakerDto.bio());
         speaker.setImageUrl(speakerDto.imageUrl());
         speaker.setImageSmallUrl(speakerDto.imageSmallUrl());
         speaker.setIsPremium(speakerDto.isPremium());
