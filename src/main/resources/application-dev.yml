@@ -63,13 +63,13 @@ elmify:
   
   r2:
     # For local development, use MinIO
-    # Use network IP so iOS simulator can access presigned URLs
-    endpoint: http://192.168.39.138:9000
+    # Use network IP so iOS simulator/device can access presigned URLs
+    endpoint: http://192.168.39.119:9000
     bucket-name: elmify-audio
     access-key: minioadmin
     secret-key: minioadmin
     region: us-east-1
-    presigned-url-expiration: PT1H  # 1 hour for development
+    presigned-url-expiration: PT6H  # 6 hours for development (longer lectures + buffer time)
   
   clerk:
     # Development Clerk keys (use test keys)

@@ -61,12 +61,17 @@ public class StorageService {
 
     /**
      * Generate a presigned URL for streaming audio files
+     * Optimized for network streaming with range request support
      */
     public String generatePresignedUrl(String objectKey) {
         try {
+            // Build GetObject request with optimizations for streaming
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(objectKey)
+                    // Add response headers to optimize streaming
+                    .responseContentType("audio/mpeg") // Explicit content type
+                    .responseCacheControl("public, max-age=31536000") // Cache for 1 year
                     .build();
 
             GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
@@ -76,8 +81,8 @@ public class StorageService {
 
             PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
             String url = presignedRequest.url().toString();
-            
-            logger.debug("Generated presigned URL for key: {}", objectKey);
+
+            logger.debug("Generated presigned URL for key: {} (expires in {})", objectKey, presignedUrlExpiration);
             return url;
         } catch (Exception e) {
             logger.error("Failed to generate presigned URL for key: {}", objectKey, e);

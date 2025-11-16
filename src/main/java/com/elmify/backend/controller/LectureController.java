@@ -132,18 +132,34 @@ public class LectureController {
     @ApiResponse(responseCode = "500", description = "Failed to generate URL")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, String>> getStreamUrl(@PathVariable Long id) {
+        long startTime = System.currentTimeMillis();
+        logger.info("🎵 Stream URL request for lecture ID: {}", id);
+
         try {
+            long dbStart = System.currentTimeMillis();
             Lecture lecture = lectureService.getLectureById(id)
                     .orElseThrow(() -> new RuntimeException("Lecture not found"));
+            long dbTime = System.currentTimeMillis() - dbStart;
+            logger.info("✓ Database fetch took: {}ms", dbTime);
 
             // After getting the URL, increment the play count as an optimistic update.
             lectureService.incrementPlayCount(id);
 
+            long urlStart = System.currentTimeMillis();
             String presignedUrl = storageService.generatePresignedUrl(lecture.getFilePath());
+            long urlTime = System.currentTimeMillis() - urlStart;
+
+            long totalTime = System.currentTimeMillis() - startTime;
+            logger.info("✓ URL generation took: {}ms", urlTime);
+            logger.info("✓ Total request time: {}ms", totalTime);
+            logger.info("📋 Generated URL length: {} chars", presignedUrl.length());
+            logger.info("📋 File path: {}", lecture.getFilePath());
+
             return ResponseEntity.ok(Map.of("url", presignedUrl));
 
         } catch (RuntimeException e) {
-            logger.error("Failed to generate stream URL for lecture ID {}: {}", id, e.getMessage());
+            long totalTime = System.currentTimeMillis() - startTime;
+            logger.error("❌ Failed to generate stream URL for lecture ID {} after {}ms: {}", id, totalTime, e.getMessage());
             // Check if the exception message indicates a "not found" scenario
             if (e.getMessage().contains("not found")) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));

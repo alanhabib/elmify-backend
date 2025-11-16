@@ -78,7 +78,7 @@ elmify:
     access-key: ${R2_ACCESS_KEY}
     secret-key: ${R2_SECRET_KEY}
     region: ${R2_REGION:auto}
-    presigned-url-expiration: PT1H  # 1 hour
+    presigned-url-expiration: PT6H  # 6 hours (allows for long lectures without URL expiration)
 
   clerk:
     secret-key: ${CLERK_SECRET_KEY}
