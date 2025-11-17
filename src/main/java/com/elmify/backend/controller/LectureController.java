@@ -200,9 +200,18 @@ public class LectureController {
             if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
                 String[] ranges = rangeHeader.substring(6).split("-");
                 long start = ranges[0].isEmpty() ? 0 : Long.parseLong(ranges[0]);
-                long end = ranges.length > 1 && !ranges[1].isEmpty()
+                long requestedEnd = ranges.length > 1 && !ranges[1].isEmpty()
                     ? Long.parseLong(ranges[1])
                     : fileSize - 1;
+
+                // Limit chunk size to 10MB to prevent timeouts and connection resets
+                // iOS AVPlayer will automatically request more chunks as needed
+                long maxChunkSize = 10 * 1024 * 1024; // 10MB
+                long end = Math.min(requestedEnd, start + maxChunkSize - 1);
+                end = Math.min(end, fileSize - 1);
+
+                logger.info("📦 Serving range: bytes={}-{}/{} (requested: {}-{})",
+                    start, end, fileSize, start, requestedEnd);
 
                 // Stream only the requested range from R2
                 var rangedStream = storageService.getObjectStreamRange(lecture.getFilePath(), start, end);
