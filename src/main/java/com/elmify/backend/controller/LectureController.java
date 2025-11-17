@@ -124,7 +124,7 @@ public class LectureController {
 
     @GetMapping("/{id}/stream-url")
     @Operation(summary = "Get Secure Stream URL",
-            description = "Generates a secure, time-limited URL for streaming a lecture's audio. Requires authentication.")
+            description = "Generates a public CDN URL for streaming a lecture's audio from Cloudflare R2. Requires authentication.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "200", description = "URL generated successfully")
     @ApiResponse(responseCode = "401", description = "Authentication required")
@@ -145,19 +145,20 @@ public class LectureController {
             // After getting the URL, increment the play count as an optimistic update.
             lectureService.incrementPlayCount(id);
 
-            // Return direct R2 public URL for best performance
-            // R2 bucket is now public, so iOS can stream directly
-            String streamUrl = lecture.getAudioUrl();
-
-            if (streamUrl == null || streamUrl.isEmpty()) {
-                throw new RuntimeException("Audio URL not found for lecture");
+            // Build direct CDN URL from file path
+            // Format: https://cdn.elmify.store/SpeakerName/CollectionName/FileName.mp3
+            String filePath = lecture.getFilePath();
+            if (filePath == null || filePath.isEmpty()) {
+                throw new RuntimeException("File path not found for lecture");
             }
+
+            String cdnUrl = "https://cdn.elmify.store/" + filePath;
 
             long totalTime = System.currentTimeMillis() - startTime;
             logger.info("✓ Total request time: {}ms", totalTime);
-            logger.info("📋 Returning direct R2 URL: {}", streamUrl);
+            logger.info("📋 Returning CDN URL: {}", cdnUrl);
 
-            return ResponseEntity.ok(Map.of("url", streamUrl));
+            return ResponseEntity.ok(Map.of("url", cdnUrl));
 
         } catch (RuntimeException e) {
             long totalTime = System.currentTimeMillis() - startTime;
