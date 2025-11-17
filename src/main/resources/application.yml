@@ -92,3 +92,21 @@ elmify:
   
   security:
     admin-emails: ${ADMIN_EMAILS:dalanhabib@gmail.com}
+
+  # Audio streaming configuration
+  streaming:
+    # Maximum chunk size for range requests (10MB default)
+    # Prevents connection timeouts on mobile networks
+    max-chunk-size: 10485760  # 10MB in bytes
+
+    # Buffer size for I/O operations (8KB optimal for most cases)
+    buffer-size: 8192
+
+    # Enable gzip compression (false for audio - already compressed)
+    enable-compression: false
+
+    # Cache duration in seconds (1 year for immutable audio files)
+    cache-max-age: 31536000
+
+    # Enable detailed logging for debugging (impacts performance)
+    enable-detailed-logging: false

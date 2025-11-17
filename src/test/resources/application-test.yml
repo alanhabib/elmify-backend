@@ -1,0 +1,42 @@
+# Test Configuration
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:15:///testdb
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+  flyway:
+    enabled: false
+
+# Test-specific streaming configuration
+elmify:
+  streaming:
+    max-chunk-size: 1048576  # 1MB for faster tests
+    buffer-size: 4096
+    enable-compression: false
+    cache-max-age: 3600
+    enable-detailed-logging: true
+
+  r2:
+    # Will be overridden by DynamicPropertySource in tests
+    endpoint: http://localhost:4566
+    bucket-name: test-bucket
+    access-key: test
+    secret-key: test
+    region: us-east-1
+    presigned-url-expiration: PT1H
+
+  clerk:
+    secret-key: test-secret-key
+    publishable-key: test-publishable-key
+    jwt-issuer: https://test.clerk.accounts.dev
+
+logging:
+  level:
+    com.elmify: DEBUG
+    org.testcontainers: INFO
+    software.amazon.awssdk: WARN
