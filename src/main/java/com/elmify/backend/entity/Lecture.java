@@ -73,6 +73,9 @@ public class Lecture {
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
 
+    @Column(name = "audio_url", length = 1024)
+    private String audioUrl; // Full public R2 URL for direct streaming
+
     @Column(name = "waveform_data", columnDefinition = "TEXT")
     private String waveformData; // JSON waveform data
 

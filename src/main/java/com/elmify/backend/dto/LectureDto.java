@@ -37,6 +37,7 @@ public record LectureDto(
         String description,
         Integer lectureNumber,
         String thumbnailUrl,
+        String audioUrl, // Full R2 public URL for direct streaming
 
         // Include IDs and important fields from related entities for the client
         Long speakerId,
@@ -79,6 +80,7 @@ public record LectureDto(
                 lecture.getDescription(),
                 lecture.getLectureNumber(),
                 lecture.getThumbnailUrl(),
+                lecture.getAudioUrl(), // Return full R2 URL
                 speakerId,
                 speakerName,
                 collectionId,
@@ -133,6 +135,7 @@ public record LectureDto(
                 lecture.getDescription(),
                 lecture.getLectureNumber(),
                 convertToPresignedUrl(thumbnailPath, storageService),
+                lecture.getAudioUrl(), // Return full R2 URL
                 speakerId,
                 speakerName,
                 collectionId,
@@ -194,6 +197,7 @@ public record LectureDto(
         lecture.setDescription(this.description);
         lecture.setLectureNumber(this.lectureNumber);
         lecture.setThumbnailUrl(this.thumbnailUrl);
+        lecture.setAudioUrl(this.audioUrl);
         // Note: speaker and collection are intentionally left null here.
         return lecture;
     }
