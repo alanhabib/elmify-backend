@@ -6,7 +6,7 @@ ADD COLUMN audio_url VARCHAR(1024);
 -- Populate audio_url with full R2 public URLs based on file_path
 -- Format: https://pub-YOUR-R2-ID.r2.dev/file_path
 UPDATE lectures
-SET audio_url = 'https://pub-c3e9209786b34415821b131478044dd5.r2.dev/' || file_path
+SET audio_url = 'https://pub-f62fc66a08a14cbab5f1fc2f27d3b71d.r2.dev/' || file_path
 WHERE file_path IS NOT NULL AND audio_url IS NULL;
 
 -- Create index for faster lookups
