@@ -145,13 +145,17 @@ public class LectureController {
             // After getting the URL, increment the play count as an optimistic update.
             lectureService.incrementPlayCount(id);
 
-            // Return proxy stream URL since R2 bucket is private
-            // Frontend will use this to stream through our backend
-            String streamUrl = "/api/v1/lectures/" + id + "/stream";
+            // Return direct R2 public URL for best performance
+            // R2 bucket is now public, so iOS can stream directly
+            String streamUrl = lecture.getAudioUrl();
+
+            if (streamUrl == null || streamUrl.isEmpty()) {
+                throw new RuntimeException("Audio URL not found for lecture");
+            }
 
             long totalTime = System.currentTimeMillis() - startTime;
             logger.info("✓ Total request time: {}ms", totalTime);
-            logger.info("📋 Returning proxy stream URL: {}", streamUrl);
+            logger.info("📋 Returning direct R2 URL: {}", streamUrl);
 
             return ResponseEntity.ok(Map.of("url", streamUrl));
 

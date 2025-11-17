@@ -62,13 +62,12 @@ elmify:
     allowed-origins: "*"  # Allow all origins in development
   
   r2:
-    # For local development, use MinIO
-    # Use network IP so iOS simulator/device can access presigned URLs
-    endpoint: http://192.168.39.119:9000
-    bucket-name: elmify-audio
-    access-key: minioadmin
-    secret-key: minioadmin
-    region: us-east-1
+    # Use production R2 for testing
+    endpoint: ${R2_ENDPOINT:https://b995be98e08909685abfca00c971e79e.r2.cloudflarestorage.com}
+    bucket-name: ${R2_BUCKET_NAME:elmify-audio}
+    access-key: ${R2_ACCESS_KEY}
+    secret-key: ${R2_SECRET_KEY}
+    region: ${R2_REGION:auto}
     presigned-url-expiration: PT6H  # 6 hours for development (longer lectures + buffer time)
   
   clerk:
