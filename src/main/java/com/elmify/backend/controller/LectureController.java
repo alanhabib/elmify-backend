@@ -145,17 +145,15 @@ public class LectureController {
             // After getting the URL, increment the play count as an optimistic update.
             lectureService.incrementPlayCount(id);
 
-            long urlStart = System.currentTimeMillis();
-            String presignedUrl = storageService.generatePresignedUrl(lecture.getFilePath());
-            long urlTime = System.currentTimeMillis() - urlStart;
+            // Instead of presigned URL, return proxy stream URL
+            // This avoids iOS AVPlayer issues with R2 presigned URLs
+            String streamUrl = "/api/v1/lectures/" + id + "/stream";
 
             long totalTime = System.currentTimeMillis() - startTime;
-            logger.info("✓ URL generation took: {}ms", urlTime);
             logger.info("✓ Total request time: {}ms", totalTime);
-            logger.info("📋 Generated URL length: {} chars", presignedUrl.length());
-            logger.info("📋 File path: {}", lecture.getFilePath());
+            logger.info("📋 Returning proxy stream URL: {}", streamUrl);
 
-            return ResponseEntity.ok(Map.of("url", presignedUrl));
+            return ResponseEntity.ok(Map.of("url", streamUrl));
 
         } catch (RuntimeException e) {
             long totalTime = System.currentTimeMillis() - startTime;
@@ -165,6 +163,64 @@ public class LectureController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
             }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Could not generate stream URL"));
+        }
+    }
+
+    @GetMapping("/{id}/stream")
+    @Operation(summary = "Stream Audio",
+            description = "Streams audio content for a lecture. Requires authentication. Supports range requests for seeking.")
+    @SecurityRequirement(name = "bearerAuth")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<org.springframework.core.io.Resource> streamAudio(
+            @PathVariable Long id,
+            @RequestHeader(value = "Range", required = false) String rangeHeader) {
+        try {
+            Lecture lecture = lectureService.getLectureById(id)
+                    .orElseThrow(() -> new RuntimeException("Lecture not found"));
+
+            logger.info("🎵 Streaming audio for lecture ID: {} (Range: {})", id, rangeHeader);
+
+            // Get object metadata first to know the size
+            var metadata = storageService.getObjectMetadata(lecture.getFilePath());
+            long fileSize = metadata.size();
+
+            // Handle range requests for seeking
+            if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
+                String[] ranges = rangeHeader.substring(6).split("-");
+                long start = ranges[0].isEmpty() ? 0 : Long.parseLong(ranges[0]);
+                long end = ranges.length > 1 && !ranges[1].isEmpty()
+                    ? Long.parseLong(ranges[1])
+                    : fileSize - 1;
+
+                // Stream only the requested range from R2
+                var rangedStream = storageService.getObjectStreamRange(lecture.getFilePath(), start, end);
+                var resource = new org.springframework.core.io.InputStreamResource(rangedStream);
+
+                long contentLength = end - start + 1;
+
+                return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+                        .header("Content-Type", "audio/mpeg")
+                        .header("Accept-Ranges", "bytes")
+                        .header("Content-Range", "bytes " + start + "-" + end + "/" + fileSize)
+                        .header("Content-Length", String.valueOf(contentLength))
+                        .header("Cache-Control", "public, max-age=31536000")
+                        .body(resource);
+            }
+
+            // Stream full content from R2
+            var fullStream = storageService.getObjectStream(lecture.getFilePath());
+            var resource = new org.springframework.core.io.InputStreamResource(fullStream);
+
+            return ResponseEntity.ok()
+                    .header("Content-Type", "audio/mpeg")
+                    .header("Accept-Ranges", "bytes")
+                    .header("Content-Length", String.valueOf(fileSize))
+                    .header("Cache-Control", "public, max-age=31536000")
+                    .body(resource);
+
+        } catch (Exception e) {
+            logger.error("Failed to stream audio for lecture ID {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }
