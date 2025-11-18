@@ -262,8 +262,8 @@ function escapeSql(str) {
 function writeSQLFiles(data) {
   const migrationsDir = path.join(__dirname, '..', 'src', 'main', 'resources', 'db', 'migration');
 
-  // V24: Clean database
-  const v24Content = `-- Generated on ${new Date().toISOString()}
+  // V32: Clean database
+  const v32Content = `-- Generated on ${new Date().toISOString()}
 -- Clean all existing data before fresh R2 import
 
 BEGIN;
@@ -282,8 +282,8 @@ DELETE FROM speakers;
 COMMIT;
 `;
 
-  // V25: Insert speakers
-  const v25Content = `-- Generated on ${new Date().toISOString()}
+  // V33: Insert speakers
+  const v33Content = `-- Generated on ${new Date().toISOString()}
 -- Insert speakers from R2
 
 BEGIN;
@@ -295,8 +295,8 @@ ${data.speakers.join(',\n')};
 COMMIT;
 `;
 
-  // V26: Insert collections
-  const v26Content = `-- Generated on ${new Date().toISOString()}
+  // V34: Insert collections
+  const v34Content = `-- Generated on ${new Date().toISOString()}
 -- Insert collections from R2
 
 BEGIN;
@@ -308,7 +308,7 @@ ${data.collections.join(',\n')};
 COMMIT;
 `;
 
-  // V27: Insert lectures (split into chunks if too large)
+  // V35: Insert lectures (split into chunks if too large)
   const chunkSize = 100;
   const lectureChunks = [];
   for (let i = 0; i < data.lectures.length; i += chunkSize) {
@@ -316,14 +316,14 @@ COMMIT;
   }
 
   // Write files
-  fs.writeFileSync(path.join(migrationsDir, 'V24__clean_database_for_r2_import.sql'), v24Content);
-  fs.writeFileSync(path.join(migrationsDir, 'V25__insert_speakers_from_r2.sql'), v25Content);
-  fs.writeFileSync(path.join(migrationsDir, 'V26__insert_collections_from_r2.sql'), v26Content);
+  fs.writeFileSync(path.join(migrationsDir, 'V32__clean_database_for_r2_import.sql'), v32Content);
+  fs.writeFileSync(path.join(migrationsDir, 'V33__insert_speakers_from_r2.sql'), v33Content);
+  fs.writeFileSync(path.join(migrationsDir, 'V34__insert_collections_from_r2.sql'), v34Content);
 
   // Write lecture migrations (can be multiple parts if many lectures)
   for (let i = 0; i < lectureChunks.length; i++) {
     const partNum = i + 1;
-    const versionNum = 27 + i;
+    const versionNum = 35 + i;
     const partContent = `-- Generated on ${new Date().toISOString()}
 -- Insert lectures from R2 (Part ${partNum} of ${lectureChunks.length})
 
@@ -340,10 +340,10 @@ COMMIT;
 
   console.log(`\n✅ Generated migration files in:`);
   console.log(`   ${migrationsDir}`);
-  console.log(`   - V24: Clean database`);
-  console.log(`   - V25: Insert ${data.speakers.length} speakers`);
-  console.log(`   - V26: Insert ${data.collections.length} collections`);
-  console.log(`   - V27-V${26 + lectureChunks.length}: Insert ${data.lectures.length} lectures (${lectureChunks.length} parts)`);
+  console.log(`   - V32: Clean database`);
+  console.log(`   - V33: Insert ${data.speakers.length} speakers`);
+  console.log(`   - V34: Insert ${data.collections.length} collections`);
+  console.log(`   - V35-V${34 + lectureChunks.length}: Insert ${data.lectures.length} lectures (${lectureChunks.length} parts)`);
 }
 
 /**
