@@ -145,13 +145,18 @@ public class LectureController {
             // After getting the URL, increment the play count as an optimistic update.
             lectureService.incrementPlayCount(id);
 
-            // Build direct CDN URL from actual R2 structure
-            // R2 Structure: SpeakerName/CollectionName/XX - LectureTitle.mp3
-            // This matches the actual files in R2, not the database file_path column
+            // Try to build R2 CDN URL dynamically first
+            // Falls back to file_path if speaker/collection not available
             String cdnUrl = buildR2CdnUrl(lecture);
 
+            // Fallback to file_path if dynamic construction failed
             if (cdnUrl == null) {
-                throw new RuntimeException("Could not build CDN URL for lecture");
+                String filePath = lecture.getFilePath();
+                if (filePath == null || filePath.isEmpty()) {
+                    throw new RuntimeException("File path not found for lecture");
+                }
+                cdnUrl = "https://cdn.elmify.store/" + filePath;
+                logger.info("Using file_path fallback: {}", filePath);
             }
 
             long totalTime = System.currentTimeMillis() - startTime;
