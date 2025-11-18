@@ -1,4 +1,4 @@
--- Generated on 2025-11-18T08:32:35.561Z
+-- Generated on 2025-11-18T08:41:56.615Z
 -- Insert speakers from R2
 
 BEGIN;

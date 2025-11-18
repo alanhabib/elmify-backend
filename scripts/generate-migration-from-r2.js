@@ -234,8 +234,8 @@ function escapeSql(str) {
 function writeSQLFiles(data) {
   const migrationsDir = path.join(__dirname, '..', 'src', 'main', 'resources', 'db', 'migration');
 
-  // V16: Clean database
-  const v16Content = `-- Generated on ${new Date().toISOString()}
+  // V24: Clean database
+  const v24Content = `-- Generated on ${new Date().toISOString()}
 -- Clean all existing data before fresh R2 import
 
 BEGIN;
@@ -254,8 +254,8 @@ DELETE FROM speakers;
 COMMIT;
 `;
 
-  // V17: Insert speakers
-  const v17Content = `-- Generated on ${new Date().toISOString()}
+  // V25: Insert speakers
+  const v25Content = `-- Generated on ${new Date().toISOString()}
 -- Insert speakers from R2
 
 BEGIN;
@@ -267,8 +267,8 @@ ${data.speakers.join(',\n')};
 COMMIT;
 `;
 
-  // V18: Insert collections
-  const v18Content = `-- Generated on ${new Date().toISOString()}
+  // V26: Insert collections
+  const v26Content = `-- Generated on ${new Date().toISOString()}
 -- Insert collections from R2
 
 BEGIN;
@@ -280,7 +280,7 @@ ${data.collections.join(',\n')};
 COMMIT;
 `;
 
-  // V19: Insert lectures (split into chunks if too large)
+  // V27: Insert lectures (split into chunks if too large)
   const chunkSize = 100;
   const lectureChunks = [];
   for (let i = 0; i < data.lectures.length; i += chunkSize) {
@@ -288,14 +288,14 @@ COMMIT;
   }
 
   // Write files
-  fs.writeFileSync(path.join(migrationsDir, 'V16__clean_database_for_r2_import.sql'), v16Content);
-  fs.writeFileSync(path.join(migrationsDir, 'V17__insert_speakers_from_r2.sql'), v17Content);
-  fs.writeFileSync(path.join(migrationsDir, 'V18__insert_collections_from_r2.sql'), v18Content);
+  fs.writeFileSync(path.join(migrationsDir, 'V24__clean_database_for_r2_import.sql'), v24Content);
+  fs.writeFileSync(path.join(migrationsDir, 'V25__insert_speakers_from_r2.sql'), v25Content);
+  fs.writeFileSync(path.join(migrationsDir, 'V26__insert_collections_from_r2.sql'), v26Content);
 
   // Write lecture migrations (can be multiple parts if many lectures)
   for (let i = 0; i < lectureChunks.length; i++) {
     const partNum = i + 1;
-    const versionNum = 19 + i;
+    const versionNum = 27 + i;
     const partContent = `-- Generated on ${new Date().toISOString()}
 -- Insert lectures from R2 (Part ${partNum} of ${lectureChunks.length})
 
@@ -312,10 +312,10 @@ COMMIT;
 
   console.log(`\n✅ Generated migration files in:`);
   console.log(`   ${migrationsDir}`);
-  console.log(`   - V16: Clean database`);
-  console.log(`   - V17: Insert ${data.speakers.length} speakers`);
-  console.log(`   - V18: Insert ${data.collections.length} collections`);
-  console.log(`   - V19-V${18 + lectureChunks.length}: Insert ${data.lectures.length} lectures (${lectureChunks.length} parts)`);
+  console.log(`   - V24: Clean database`);
+  console.log(`   - V25: Insert ${data.speakers.length} speakers`);
+  console.log(`   - V26: Insert ${data.collections.length} collections`);
+  console.log(`   - V27-V${26 + lectureChunks.length}: Insert ${data.lectures.length} lectures (${lectureChunks.length} parts)`);
 }
 
 /**
@@ -345,9 +345,8 @@ async function main() {
     console.log('\n🎉 Migration files generated successfully!');
     console.log('\nNext steps:');
     console.log('  1. Review generated files in src/main/resources/db/migration/');
-    console.log('  2. Delete old migrations V2-V15 if needed');
-    console.log('  3. Build: ./mvnw clean package -DskipTests');
-    console.log('  4. Commit and push to deploy to Railway');
+    console.log('  2. Build: JAVA_HOME=/path/to/java21 ./mvnw clean package -DskipTests');
+    console.log('  3. Commit and push to deploy to Railway');
 
   } catch (error) {
     console.error('\n❌ Error:', error.message);
