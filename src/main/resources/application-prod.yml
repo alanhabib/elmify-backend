@@ -30,6 +30,7 @@ spring:
     enabled: true
     clean-disabled: true
     validate-on-migrate: true
+    ignore-missing-migrations: true
 
   lifecycle:
     timeout-per-shutdown-phase: 20s
