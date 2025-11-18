@@ -208,7 +208,7 @@ function generateSQL(structure) {
         const filePath = `${speakerName}/${collectionName}/${file.name}`;
 
         lectures.push(
-          `(${currentLectureId}, NULL, NULL, '${escapeSql(title)}', '${escapeSql(speakerName)}', '${escapeSql(collectionName)}', NULL, ${year}, 0, '${escapeSql(file.name)}', '${escapeSql(filePath)}', ${file.size}, 'audio/mpeg', NULL, NULL, NULL, NULL, NULL, TRUE, 0, NOW(), NULL, NOW(), NOW(), ${currentSpeakerId}, ${currentCollectionId}, NULL, ${i + 1})`
+          `(${currentLectureId}, '${escapeSql(title)}', NULL, ${year}, 0, '${escapeSql(file.name)}', '${escapeSql(filePath)}', ${file.size}, 'audio/mpeg', NULL, NULL, NULL, NULL, NULL, TRUE, 0, NOW(), NULL, NOW(), NOW(), ${currentSpeakerId}, ${currentCollectionId}, NULL, ${i + 1})`
         );
       }
     }
@@ -301,7 +301,7 @@ COMMIT;
 
 BEGIN;
 
-INSERT INTO lectures (id, user_id, directory_id, title, speaker, collection, genre, year, duration, file_name, file_path, file_size, file_format, bitrate, sample_rate, file_hash, thumbnail_url, waveform_data, is_public, play_count, uploaded_at, last_played_at, created_at, updated_at, speaker_id, collection_id, description, lecture_number)
+INSERT INTO lectures (id, title, genre, year, duration, file_name, file_path, file_size, file_format, bitrate, sample_rate, file_hash, thumbnail_url, waveform_data, is_public, play_count, uploaded_at, last_played_at, created_at, updated_at, speaker_id, collection_id, description, lecture_number)
 VALUES
 ${lectureChunks[i].join(',\n')};
 
