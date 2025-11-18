@@ -1,4 +1,4 @@
--- Generated on 2025-11-18T08:41:56.617Z
+-- Generated on 2025-11-18T09:15:15.054Z
 -- Insert lectures from R2 (Part 1 of 5)
 
 BEGIN;

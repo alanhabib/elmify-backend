@@ -108,34 +108,57 @@ function parseR2Structure(objects) {
     const key = obj.Key;
     const parts = key.split('/');
 
-    if (parts.length < 2) continue; // Skip root level files
-
     const speakerName = parts[0];
+
+    if (!structure[speakerName]) {
+      structure[speakerName] = {
+        speakerImage: null,
+        speakerImageSmall: null,
+        collections: {}
+      };
+    }
+
+    // Speaker-level files (parts.length === 2)
+    if (parts.length === 2) {
+      const fileName = parts[1];
+      if (fileName === 'speaker.jpg' || fileName === 'speaker.png' || fileName === 'speaker.webp') {
+        structure[speakerName].speakerImage = key;
+      } else if (fileName === 'speaker_small.jpg' || fileName === 'speaker_small.png' || fileName === 'speaker_small.webp') {
+        structure[speakerName].speakerImageSmall = key;
+      }
+      continue;
+    }
+
+    // Collection-level files (parts.length >= 3)
+    if (parts.length < 3) continue;
+
     const collectionName = parts[1];
     const fileName = parts[2];
 
-    if (!structure[speakerName]) {
-      structure[speakerName] = {};
-    }
-
-    if (!structure[speakerName][collectionName]) {
-      structure[speakerName][collectionName] = {
+    if (!structure[speakerName].collections[collectionName]) {
+      structure[speakerName].collections[collectionName] = {
         files: [],
         metadata: null,
+        coverImage: null,
+        coverImageSmall: null,
       };
     }
 
     if (fileName) {
       if (fileName === 'collection.json') {
-        structure[speakerName][collectionName].metadataKey = key;
+        structure[speakerName].collections[collectionName].metadataKey = key;
       } else if (fileName.endsWith('.mp3')) {
-        structure[speakerName][collectionName].files.push({
+        structure[speakerName].collections[collectionName].files.push({
           name: fileName,
           key: key,
           size: obj.Size,
         });
-      } else if (fileName.startsWith('collection') && (fileName.endsWith('.jpg') || fileName.endsWith('.webp'))) {
-        structure[speakerName][collectionName].coverImage = key;
+      } else if (fileName.startsWith('collection') && (fileName.endsWith('.jpg') || fileName.endsWith('.webp') || fileName.endsWith('.png'))) {
+        if (fileName.includes('_small')) {
+          structure[speakerName].collections[collectionName].coverImageSmall = key;
+        } else {
+          structure[speakerName].collections[collectionName].coverImage = key;
+        }
       }
     }
   }
@@ -149,8 +172,8 @@ function parseR2Structure(objects) {
 async function loadMetadata(structure) {
   console.log('\n📋 Loading collection metadata...');
 
-  for (const [speakerName, collections] of Object.entries(structure)) {
-    for (const [collectionName, data] of Object.entries(collections)) {
+  for (const [speakerName, speakerData] of Object.entries(structure)) {
+    for (const [collectionName, data] of Object.entries(speakerData.collections)) {
       if (data.metadataKey) {
         try {
           const content = await getObjectContent(data.metadataKey);
@@ -178,19 +201,24 @@ function generateSQL(structure) {
 
   console.log('\n🔨 Generating SQL...');
 
-  for (const [speakerName, speakerCollections] of Object.entries(structure)) {
+  const CDN_BASE_URL = 'https://cdn.elmify.store/';
+
+  for (const [speakerName, speakerData] of Object.entries(structure)) {
     const currentSpeakerId = speakerId++;
+    const speakerImage = speakerData.speakerImage ? `'${CDN_BASE_URL}${speakerData.speakerImage}'` : 'NULL';
+    const speakerImageSmall = speakerData.speakerImageSmall ? `'${CDN_BASE_URL}${speakerData.speakerImageSmall}'` : 'NULL';
 
-    // Insert speaker
-    speakers.push(`(${currentSpeakerId}, '${escapeSql(speakerName)}', NOW(), NOW(), NULL, NULL, 'public', NULL, FALSE)`);
+    // Insert speaker with images
+    speakers.push(`(${currentSpeakerId}, '${escapeSql(speakerName)}', NOW(), NOW(), ${speakerImage}, ${speakerImageSmall}, 'public', NULL, FALSE)`);
 
-    for (const [collectionName, data] of Object.entries(speakerCollections)) {
+    for (const [collectionName, data] of Object.entries(speakerData.collections)) {
       const currentCollectionId = collectionId++;
       const year = data.metadata?.year || new Date().getFullYear();
-      const coverImage = data.coverImage ? `'${data.coverImage}'` : 'NULL';
+      const coverImage = data.coverImage ? `'${CDN_BASE_URL}${data.coverImage}'` : 'NULL';
+      const coverImageSmall = data.coverImageSmall ? `'${CDN_BASE_URL}${data.coverImageSmall}'` : 'NULL';
 
-      // Insert collection
-      collections.push(`(${currentCollectionId}, ${currentSpeakerId}, '${escapeSql(collectionName)}', ${year}, ${coverImage}, NOW(), NOW(), NULL)`);
+      // Insert collection with images
+      collections.push(`(${currentCollectionId}, ${currentSpeakerId}, '${escapeSql(collectionName)}', ${year}, ${coverImage}, NOW(), NOW(), ${coverImageSmall})`);
 
       // Sort audio files by name
       const audioFiles = data.files.sort((a, b) => a.name.localeCompare(b.name));
