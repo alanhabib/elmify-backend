@@ -145,14 +145,14 @@ public class LectureController {
             // After getting the URL, increment the play count as an optimistic update.
             lectureService.incrementPlayCount(id);
 
-            // Build direct CDN URL from file path
-            // Format: https://cdn.elmify.store/SpeakerName/CollectionName/FileName.mp3
-            String filePath = lecture.getFilePath();
-            if (filePath == null || filePath.isEmpty()) {
-                throw new RuntimeException("File path not found for lecture");
-            }
+            // Build direct CDN URL from actual R2 structure
+            // R2 Structure: SpeakerName/CollectionName/XX - LectureTitle.mp3
+            // This matches the actual files in R2, not the database file_path column
+            String cdnUrl = buildR2CdnUrl(lecture);
 
-            String cdnUrl = "https://cdn.elmify.store/" + filePath;
+            if (cdnUrl == null) {
+                throw new RuntimeException("Could not build CDN URL for lecture");
+            }
 
             long totalTime = System.currentTimeMillis() - startTime;
             logger.info("✓ Total request time: {}ms", totalTime);
@@ -247,5 +247,44 @@ public class LectureController {
             logger.error("Failed to stream audio for lecture ID {}: {}", id, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    /**
+     * Build R2 CDN URL from lecture metadata
+     * R2 Structure: SpeakerName/CollectionName/XX - LectureTitle.mp3
+     *
+     * Examples:
+     * - Ahmad Jibril/Legends Islam/01 - Imam Bukhari.mp3
+     * - Bilal Assad/Those Who Desire Paradise/01 - 01 Introduction.mp3
+     * - Abdul Rashid Sufi/Quran Hafs/03 - Al-Imran (Family of Imran).mp3
+     */
+    private String buildR2CdnUrl(Lecture lecture) {
+        if (lecture.getSpeaker() == null || lecture.getCollection() == null) {
+            logger.warn("Lecture {} missing speaker or collection relationship", lecture.getId());
+            return null;
+        }
+
+        String speakerName = lecture.getSpeaker().getName();
+        String collectionTitle = lecture.getCollection().getTitle();
+
+        // Handle special case: "Legends of Islam" → "Legends Islam" in R2
+        if ("Legends of Islam".equals(collectionTitle)) {
+            collectionTitle = "Legends Islam";
+        }
+
+        // Build filename from lecture number and title
+        // Format: XX - Title.mp3
+        String lectureNumber = lecture.getLectureNumber() != null
+            ? String.format("%02d", lecture.getLectureNumber())
+            : "01";
+
+        String fileName = lectureNumber + " - " + lecture.getTitle() + ".mp3";
+
+        // Build full path
+        String path = speakerName + "/" + collectionTitle + "/" + fileName;
+
+        logger.info("Built R2 path for lecture {}: {}", lecture.getId(), path);
+
+        return "https://cdn.elmify.store/" + path;
     }
 }
