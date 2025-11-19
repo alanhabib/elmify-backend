@@ -63,7 +63,9 @@ public class RateLimitingConfig {
         }
 
         private String getBucketType(String endpoint) {
-            if (endpoint.contains("/stream-url")) {
+            if (endpoint.contains("/api/v1/playback")) {
+                return "PLAYBACK";   // Higher limits for playback position tracking
+            } else if (endpoint.contains("/stream-url")) {
                 return "STREAMING";  // More restrictive for streaming endpoints
             } else if (endpoint.contains("/api/v1/analytics")) {
                 return "ANALYTICS";  // Moderate limits for analytics
@@ -75,8 +77,11 @@ public class RateLimitingConfig {
 
         private Bucket createBucket(String key) {
             String bucketType = key.split(":")[1];
-            
+
             return switch (bucketType) {
+                case "PLAYBACK" -> Bucket4j.builder()
+                    .addLimit(Bandwidth.classic(200, Refill.intervally(200, Duration.ofMinutes(1))))
+                    .build();
                 case "STREAMING" -> Bucket4j.builder()
                     .addLimit(Bandwidth.classic(10, Refill.intervally(10, Duration.ofMinutes(1))))
                     .build();
