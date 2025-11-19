@@ -39,9 +39,22 @@ public class UserController {
     @PostMapping("/sync")
     @Operation(summary = "Synchronize User Data",
             description = "Creates a new user or updates an existing one based on the provided Clerk ID. This is the primary endpoint for user integration.")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "200", description = "User synchronized successfully")
     @ApiResponse(responseCode = "400", description = "Invalid user data provided")
-    public ResponseEntity<UserDto> syncUser(@Valid @RequestBody UserSyncDto userSyncDto) {
+    @ApiResponse(responseCode = "403", description = "ClerkId mismatch - cannot sync other users")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserDto> syncUser(
+            Authentication authentication,
+            @Valid @RequestBody UserSyncDto userSyncDto) {
+        String tokenClerkId = authentication.getName();
+
+        // Security check: users can only sync their own data
+        if (!tokenClerkId.equals(userSyncDto.clerkId())) {
+            log.warn("ClerkId mismatch - token: {}, body: {}", tokenClerkId, userSyncDto.clerkId());
+            throw new SecurityException("Cannot sync user: clerkId mismatch");
+        }
+
         log.info("Received sync request for Clerk ID: {}", userSyncDto.clerkId());
         UserDto userDto = userService.syncUser(userSyncDto);
         return ResponseEntity.ok(userDto);
