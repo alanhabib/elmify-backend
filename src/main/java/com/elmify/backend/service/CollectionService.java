@@ -45,13 +45,15 @@ public class CollectionService {
     /**
      * Retrieves a single collection by its ID. The repository method should be configured
      * to fetch related entities like the Speaker to avoid lazy loading issues.
+     * Returns empty if collection is from a premium speaker and user is not premium.
      *
      * @param id The ID of the collection to find.
-     * @return An Optional containing the Collection entity if found.
+     * @return An Optional containing the Collection entity if found and accessible.
      */
     public Optional<Collection> getCollectionById(Long id) {
         // Assuming the repository method handles fetching the speaker as well
-        return collectionRepository.findById(id);
+        return collectionRepository.findById(id)
+                .filter(premiumFilterService::canAccessCollection);
     }
 
     /**

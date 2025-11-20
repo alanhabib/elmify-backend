@@ -41,11 +41,14 @@ public class LectureService {
 
     /**
      * Retrieves a single lecture by its ID with eagerly loaded speaker and collection.
+     * Returns empty if lecture is from a premium speaker and user is not premium.
+     *
      * @param id The ID of the lecture to find.
-     * @return An Optional containing the Lecture entity if found.
+     * @return An Optional containing the Lecture entity if found and accessible.
      */
     public Optional<Lecture> getLectureById(Long id) {
-        return Optional.ofNullable(lectureRepository.findByIdWithSpeakerAndCollection(id));
+        return Optional.ofNullable(lectureRepository.findByIdWithSpeakerAndCollection(id))
+                .filter(premiumFilterService::canAccessLecture);
     }
 
     /**

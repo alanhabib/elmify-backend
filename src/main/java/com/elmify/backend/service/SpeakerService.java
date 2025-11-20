@@ -95,12 +95,19 @@ public class SpeakerService {
 
     /**
      * Retrieves a single speaker by its ID.
+     * Returns empty if speaker is premium and user is not premium.
      *
      * @param id The ID of the speaker to find.
-     * @return An Optional containing the SpeakerDto if found.
+     * @return An Optional containing the SpeakerDto if found and accessible.
      */
     @Transactional(readOnly = true)
     public Optional<SpeakerDto> getSpeakerById(Long id) {
-        return speakerRepository.findById(id).map(speaker -> SpeakerDto.fromEntity(speaker, storageService));
+        return speakerRepository.findById(id)
+                .filter(speaker -> {
+                    // Allow access if speaker is not premium, or if user is premium
+                    boolean speakerIsPremium = speaker.getIsPremium() != null && speaker.getIsPremium();
+                    return !speakerIsPremium || isCurrentUserPremium();
+                })
+                .map(speaker -> SpeakerDto.fromEntity(speaker, storageService));
     }
 }
