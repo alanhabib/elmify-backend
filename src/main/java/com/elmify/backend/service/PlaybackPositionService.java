@@ -43,11 +43,20 @@ public class PlaybackPositionService {
     /**
      * Get lectures user can continue listening to
      * (positions where currentPosition > 0 and < duration)
+     * Filters out premium lectures for non-premium users
      */
     public List<PlaybackPosition> getContinueListening(String clerkId) {
         User user = userRepository.findByClerkId(clerkId)
                 .orElseThrow(() -> new RuntimeException("User not found with clerkId: " + clerkId));
-        return playbackPositionRepository.findContinueListening(user);
+
+        boolean userIsPremium = user.isPremium();
+
+        return playbackPositionRepository.findContinueListening(user).stream()
+                .filter(position -> {
+                    if (userIsPremium) return true;
+                    return !position.getLecture().isPremium();
+                })
+                .toList();
     }
 
     /**
@@ -96,14 +105,23 @@ public class PlaybackPositionService {
     /**
      * Get recent lectures (most recently played)
      * Returns all playback positions ordered by last updated time
+     * Filters out premium lectures for non-premium users
      * Useful for "Latest Lectures" feature
      */
     public List<PlaybackPosition> getRecentLectures(String clerkId, int limit) {
         User user = userRepository.findByClerkId(clerkId)
                 .orElseThrow(() -> new RuntimeException("User not found with clerkId: " + clerkId));
 
-        // Get all positions ordered by lastUpdated DESC and limit the results
+        boolean userIsPremium = user.isPremium();
+
+        // Get all positions ordered by lastUpdated DESC, filter premium content, and limit
         return playbackPositionRepository.findByUserWithLecture(user).stream()
+                .filter(position -> {
+                    // Allow all for premium users
+                    if (userIsPremium) return true;
+                    // Filter out premium lectures for non-premium users
+                    return !position.getLecture().isPremium();
+                })
                 .limit(limit)
                 .toList();
     }
