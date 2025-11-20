@@ -54,12 +54,14 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
 
     /**
      * Finds lectures by collection ID with eagerly loaded speaker and collection entities.
+     * Sorted by lectureNumber to maintain correct sequence based on R2 filename numbering.
      *
      * @param collectionId The ID of the collection.
      * @param pageable Pagination information.
-     * @return A Page of Lecture entities with speaker and collection loaded.
+     * @return A Page of Lecture entities with speaker and collection loaded, sorted by lectureNumber.
      */
-    @Query("SELECT l FROM Lecture l LEFT JOIN FETCH l.speaker LEFT JOIN FETCH l.collection WHERE l.collection.id = :collectionId")
+    @Query(value = "SELECT l FROM Lecture l LEFT JOIN FETCH l.speaker LEFT JOIN FETCH l.collection WHERE l.collection.id = :collectionId ORDER BY l.lectureNumber ASC, l.title ASC",
+           countQuery = "SELECT COUNT(l) FROM Lecture l WHERE l.collection.id = :collectionId")
     Page<Lecture> findByCollectionIdWithSpeakerAndCollection(@Param("collectionId") Long collectionId, Pageable pageable);
 
     /**
