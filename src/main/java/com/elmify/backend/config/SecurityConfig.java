@@ -43,6 +43,9 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    log.info("🔒 Configuring security with profile: {}", activeProfile);
+    log.info("🌐 CORS allowed origins: {}", allowedOriginsConfig);
+
     http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .csrf(csrf -> csrf.disable())
         .sessionManagement(
@@ -70,6 +73,8 @@ public class SecurityConfig {
                             permissions.policy("camera=(), microphone=(), geolocation=()")))
         .authorizeHttpRequests(
             authorize -> {
+              log.info("🔒 Configuring HTTP request authorization...");
+
               var auth =
                   authorize
                       // Public health check endpoints
@@ -78,6 +83,7 @@ public class SecurityConfig {
 
               // Swagger only in development
               if ("dev".equals(activeProfile)) {
+                log.info("📚 Enabling Swagger for development profile");
                 auth =
                     auth.requestMatchers(
                             "/swagger-ui.html",
@@ -86,6 +92,8 @@ public class SecurityConfig {
                             "/swagger-resources/**",
                             "/webjars/**")
                         .permitAll();
+              } else {
+                log.info("📚 Swagger DISABLED for profile: {}", activeProfile);
               }
 
               auth
@@ -100,8 +108,11 @@ public class SecurityConfig {
                   .requestMatchers(HttpMethod.GET, "/api/v1/collections/**")
                   .permitAll()
                   .requestMatchers(HttpMethod.GET, "/api/v1/lectures/**")
-                  .permitAll()
+                  .permitAll();
 
+              log.info("✅ Public GET endpoints configured: /speakers, /collections, /lectures");
+
+              auth
                   // ===== AUTHENTICATED ENDPOINTS (modifications) =====
                   // All POST/PUT/PATCH/DELETE operations require authentication
                   .requestMatchers(HttpMethod.POST, "/api/v1/**")
@@ -119,6 +130,8 @@ public class SecurityConfig {
                   // Deny all other requests
                   .anyRequest()
                   .denyAll();
+
+              log.info("✅ Security configuration complete");
             })
         .oauth2ResourceServer(
             oauth2 ->
@@ -170,11 +183,24 @@ public class SecurityConfig {
 
     // Parse comma-separated origins from environment variable
     List<String> origins = Arrays.asList(allowedOriginsConfig.split(","));
-    configuration.setAllowedOriginPatterns(origins);
+
+    // Check if using wildcard (temporary for testing)
+    boolean isWildcard = origins.contains("*") || allowedOriginsConfig.equals("*");
+
+    if (isWildcard) {
+      // Wildcard mode: allow all origins (TESTING ONLY)
+      log.warn("⚠️ CORS: Allowing ALL origins (*) - This is NOT secure for production!");
+      configuration.setAllowedOriginPatterns(List.of("*"));
+      configuration.setAllowCredentials(false); // Cannot use credentials with wildcard
+    } else {
+      // Production mode: specific origins
+      log.info("CORS: Allowing specific origins: {}", origins);
+      configuration.setAllowedOriginPatterns(origins);
+      configuration.setAllowCredentials(true);
+    }
 
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*")); // Allow all headers
-    configuration.setAllowCredentials(true);
     configuration.setMaxAge(3600L); // Cache preflight for 1 hour
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

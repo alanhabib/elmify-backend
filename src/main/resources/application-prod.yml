@@ -43,7 +43,6 @@ spring:
 # Production server configuration
 server:
   port: ${PORT:8080}
-  max-http-header-size: 8KB
   tomcat:
     max-threads: 200
     min-spare-threads: 10
@@ -56,6 +55,7 @@ server:
     enabled: true
   forward-headers-strategy: framework
   shutdown: graceful
+  max-http-request-header-size: 8KB
 
 # Production logging
 logging:
@@ -87,9 +87,9 @@ elmify:
       enabled: true
 
   cors:
-    # Production: Only allow your actual domain(s)
-    # UPDATE THIS before deployment!
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://yourdomain.com,https://www.yourdomain.com}
+    # React Native doesn't have CORS, but keeping this for web dashboard/future use
+    # For production web app, set: CORS_ALLOWED_ORIGINS=https://yourdomain.com
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:*,https://*}
 
   r2:
     endpoint: ${R2_ENDPOINT:https://b995be98e08909685abfca00c971e79e.r2.cloudflarestorage.com}
