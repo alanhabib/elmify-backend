@@ -135,19 +135,33 @@ public class SecurityConfig {
             })
         .oauth2ResourceServer(
             oauth2 ->
-                oauth2.jwt(
-                    jwt ->
-                        jwt.decoder(clerkJwtDecoder)
-                            .jwtAuthenticationConverter(clerkJwtAuthenticationConverter)))
-        .exceptionHandling(
-            exceptions ->
-                exceptions
+                oauth2
+                    .jwt(
+                        jwt ->
+                            jwt.decoder(clerkJwtDecoder)
+                                .jwtAuthenticationConverter(clerkJwtAuthenticationConverter))
+                    // Make JWT authentication optional - don't reject requests without valid tokens
                     .authenticationEntryPoint(
                         (request, response, authException) -> {
+                          // For public endpoints, treat missing/invalid JWT as anonymous user
+                          // This allows permitAll() to work properly
+                          String uri = request.getRequestURI();
+                          if (uri.startsWith("/api/v1/speakers")
+                              || uri.startsWith("/api/v1/collections")
+                              || uri.startsWith("/api/v1/lectures")
+                              || uri.startsWith("/actuator/health")
+                              || uri.startsWith("/api/v1/users/sync")) {
+                            // Public endpoint - allow through without authentication
+                            log.debug("Public endpoint accessed without JWT: {}", uri);
+                            response.setStatus(200); // Will be handled by the actual controller
+                            return;
+                          }
+
+                          // For protected endpoints, require authentication
                           log.warn(
                               "Authentication failed: {} {} from IP: {}",
                               request.getMethod(),
-                              request.getRequestURI(),
+                              uri,
                               request.getRemoteAddr());
 
                           response.setStatus(401);
@@ -156,22 +170,24 @@ public class SecurityConfig {
                               .getWriter()
                               .write(
                                   "{\"error\":\"Authentication required\",\"message\":\"Valid JWT token is required to access this resource\"}");
-                        })
-                    .accessDeniedHandler(
-                        (request, response, accessDeniedException) -> {
-                          log.warn(
-                              "Access denied: {} {} from IP: {}",
-                              request.getMethod(),
-                              request.getRequestURI(),
-                              request.getRemoteAddr());
+                        }))
+        .exceptionHandling(
+            exceptions ->
+                exceptions.accessDeniedHandler(
+                    (request, response, accessDeniedException) -> {
+                      log.warn(
+                          "Access denied: {} {} from IP: {}",
+                          request.getMethod(),
+                          request.getRequestURI(),
+                          request.getRemoteAddr());
 
-                          response.setStatus(403);
-                          response.setContentType("application/json");
-                          response
-                              .getWriter()
-                              .write(
-                                  "{\"error\":\"Access denied\",\"message\":\"Insufficient privileges to access this resource\"}");
-                        }));
+                      response.setStatus(403);
+                      response.setContentType("application/json");
+                      response
+                          .getWriter()
+                          .write(
+                              "{\"error\":\"Access denied\",\"message\":\"Insufficient privileges to access this resource\"}");
+                    }));
 
     return http.build();
   }
