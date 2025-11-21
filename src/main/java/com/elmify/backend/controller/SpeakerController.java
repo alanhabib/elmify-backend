@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,8 +40,6 @@ public class SpeakerController {
             description = "Retrieves a paginated list of all speakers with mobile-optimized pagination metadata. Requires authentication.")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved speakers")
     @ApiResponse(responseCode = "401", description = "Authentication required")
-    @SecurityRequirement(name = "bearerAuth") // This documents the security requirement in Swagger
-    @PreAuthorize("isAuthenticated()") // This enforces the security rule
     public ResponseEntity<PagedResponse<SpeakerDto>> getAllSpeakers(Pageable pageable) {
         Page<SpeakerDto> speakersPage = speakerService.getAllSpeakers(pageable);
         PagedResponse<SpeakerDto> response = PagedResponse.from(speakersPage);
@@ -55,8 +52,6 @@ public class SpeakerController {
     @ApiResponse(responseCode = "200", description = "Successfully retrieved speaker")
     @ApiResponse(responseCode = "401", description = "Authentication required")
     @ApiResponse(responseCode = "404", description = "Speaker not found")
-    @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<SpeakerDto> getSpeakerById(
             @Parameter(description = "The ID of the speaker") @PathVariable Long id) {
         return speakerService.getSpeakerById(id)
@@ -70,8 +65,6 @@ public class SpeakerController {
     @ApiResponse(responseCode = "200", description = "Successfully retrieved collections")
     @ApiResponse(responseCode = "401", description = "Authentication required")
     @ApiResponse(responseCode = "404", description = "Speaker not found")
-    @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("isAuthenticated()")
     @Transactional(readOnly = true)
     public ResponseEntity<PagedResponse<CollectionDto>> getCollectionsBySpeakerId(
             @Parameter(description = "The ID of the speaker") @PathVariable Long id,
@@ -94,8 +87,6 @@ public class SpeakerController {
     @ApiResponse(responseCode = "200", description = "Successfully retrieved lectures")
     @ApiResponse(responseCode = "401", description = "Authentication required")
     @ApiResponse(responseCode = "404", description = "Speaker not found")
-    @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("isAuthenticated()")
     @Transactional(readOnly = true)
     public ResponseEntity<PagedResponse<LectureDto>> getLecturesBySpeakerId(
             @Parameter(description = "The ID of the speaker") @PathVariable Long id,

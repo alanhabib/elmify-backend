@@ -125,12 +125,9 @@ public class LectureController {
     @GetMapping("/{id}/stream-url")
     @Operation(summary = "Get Secure Stream URL",
             description = "Generates a public CDN URL for streaming a lecture's audio from Cloudflare R2. Requires authentication.")
-    @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "200", description = "URL generated successfully")
-    @ApiResponse(responseCode = "401", description = "Authentication required")
     @ApiResponse(responseCode = "404", description = "Lecture or audio file not found")
     @ApiResponse(responseCode = "500", description = "Failed to generate URL")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, String>> getStreamUrl(@PathVariable Long id) {
         long startTime = System.currentTimeMillis();
         logger.info("🎵 Stream URL request for lecture ID: {}", id);

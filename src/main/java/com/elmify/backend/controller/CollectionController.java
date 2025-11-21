@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,8 +33,6 @@ public class CollectionController {
             description = "Retrieves a paginated list of all collections with mobile-optimized pagination metadata. Requires authentication.")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved collections")
     @ApiResponse(responseCode = "401", description = "Authentication required")
-    @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("isAuthenticated()")
     @Transactional(readOnly = true)
     public ResponseEntity<PagedResponse<CollectionDto>> getAllCollections(Pageable pageable) {
         Page<CollectionDto> collectionDtos = collectionService.getAllCollections(pageable)
@@ -50,8 +47,6 @@ public class CollectionController {
     @ApiResponse(responseCode = "200", description = "Successfully retrieved collection")
     @ApiResponse(responseCode = "401", description = "Authentication required")
     @ApiResponse(responseCode = "404", description = "Collection not found")
-    @SecurityRequirement(name = "bearerAuth")
-    @PreAuthorize("isAuthenticated()")
     @Transactional(readOnly = true)
     public ResponseEntity<CollectionDto> getCollectionById(
             @Parameter(description = "The ID of the collection") @PathVariable Long id) {
