@@ -59,8 +59,9 @@ logging:
 # Development-specific configuration
 elmify:
   cors:
-    allowed-origins: "*"  # Allow all origins in development
-  
+    # Development: Allow localhost and Expo (specific patterns for security)
+    allowed-origins: "http://localhost:*,http://127.0.0.1:*,http://192.168.39.138:*,exp://*"
+
   r2:
     # Use production R2 for testing
     endpoint: ${R2_ENDPOINT:https://b995be98e08909685abfca00c971e79e.r2.cloudflarestorage.com}

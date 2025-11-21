@@ -3,112 +3,182 @@ package com.elmify.backend.config; // Assuming it stays in the 'config' package
 import com.elmify.backend.security.ClerkJwtAuthenticationConverter;
 import com.elmify.backend.security.ClerkJwtDecoder;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
- * Central security configuration for the application.
- * Enables JWT-based authentication for the API and configures CORS.
+ * Central security configuration for the application. Enables JWT-based authentication for the API
+ * and configures CORS.
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
 
-    private final ClerkJwtDecoder clerkJwtDecoder;
-    private final ClerkJwtAuthenticationConverter clerkJwtAuthenticationConverter;
+  private final ClerkJwtDecoder clerkJwtDecoder;
+  private final ClerkJwtAuthenticationConverter clerkJwtAuthenticationConverter;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .headers(headers -> headers
-                        .frameOptions(frame -> frame.deny())
-                        .contentTypeOptions(content -> {})
-                        .httpStrictTransportSecurity(hstsConfig -> hstsConfig
+  @Value("${elmify.cors.allowed-origins}")
+  private String allowedOriginsConfig;
+
+  @Value("${spring.profiles.active:dev}")
+  private String activeProfile;
+
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .headers(
+            headers ->
+                headers
+                    .frameOptions(frame -> frame.deny())
+                    .contentTypeOptions(content -> {})
+                    .contentSecurityPolicy(
+                        csp ->
+                            csp.policyDirectives(
+                                "default-src 'self'; connect-src 'self' https://cdn.elmify.store; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'"))
+                    .httpStrictTransportSecurity(
+                        hstsConfig ->
+                            hstsConfig
                                 .maxAgeInSeconds(31536000) // 1 year
                                 .includeSubDomains(true)
-                        )
-                        .referrerPolicy(referrer -> referrer.policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN))
-                        .permissionsPolicy(permissions -> permissions
-                                .policy("camera=(), microphone=(), geolocation=()")
-                        )
-                )
-                .authorizeHttpRequests(authorize -> authorize
-                        // Public health check endpoints
-                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
-                        // Public Swagger/OpenAPI endpoints
-                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
-                        // Public user sync endpoint (called during authentication)
-                        .requestMatchers("/api/v1/users/sync").permitAll()
-                        // Public audio streaming endpoints (for guest mode)
-                        .requestMatchers("/api/v1/lectures/*/stream").permitAll()
-                        .requestMatchers("/api/v1/lectures/*/stream-url").permitAll()
-                        // Public browsing endpoints (speakers, collections, lectures)
-                        .requestMatchers("/api/v1/speakers/**").permitAll()
-                        .requestMatchers("/api/v1/collections/**").permitAll()
-                        .requestMatchers("/api/v1/lectures/**").permitAll()
-                        // All other API endpoints require authentication
-                        .requestMatchers("/api/v1/**").authenticated()
-                        // Deny all other requests
-                        .anyRequest().denyAll()
-                )
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt
-                                .decoder(clerkJwtDecoder)
-                                .jwtAuthenticationConverter(clerkJwtAuthenticationConverter)
-                        )
-                )
-                .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(401);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"error\":\"Authentication required\",\"message\":\"Valid JWT token is required to access this resource\"}");
+                                .preload(true))
+                    .referrerPolicy(
+                        referrer ->
+                            referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN))
+                    .permissionsPolicy(
+                        permissions ->
+                            permissions.policy("camera=(), microphone=(), geolocation=()")))
+        .authorizeHttpRequests(
+            authorize -> {
+              var auth =
+                  authorize
+                      // Public health check endpoints
+                      .requestMatchers("/actuator/health", "/actuator/health/**")
+                      .permitAll();
+
+              // Swagger only in development
+              if ("dev".equals(activeProfile)) {
+                auth =
+                    auth.requestMatchers(
+                            "/swagger-ui.html",
+                            "/swagger-ui/**",
+                            "/v3/api-docs/**",
+                            "/swagger-resources/**",
+                            "/webjars/**")
+                        .permitAll();
+              }
+
+              auth
+                  // Public user sync endpoint (called during authentication)
+                  .requestMatchers("/api/v1/users/sync")
+                  .permitAll()
+
+                  // ===== PUBLIC GET ENDPOINTS (for browsing/streaming) =====
+                  // Allow public GET access for browsing content
+                  .requestMatchers(HttpMethod.GET, "/api/v1/speakers/**")
+                  .permitAll()
+                  .requestMatchers(HttpMethod.GET, "/api/v1/collections/**")
+                  .permitAll()
+                  .requestMatchers(HttpMethod.GET, "/api/v1/lectures/**")
+                  .permitAll()
+
+                  // ===== AUTHENTICATED ENDPOINTS (modifications) =====
+                  // All POST/PUT/PATCH/DELETE operations require authentication
+                  .requestMatchers(HttpMethod.POST, "/api/v1/**")
+                  .authenticated()
+                  .requestMatchers(HttpMethod.PUT, "/api/v1/**")
+                  .authenticated()
+                  .requestMatchers(HttpMethod.PATCH, "/api/v1/**")
+                  .authenticated()
+                  .requestMatchers(HttpMethod.DELETE, "/api/v1/**")
+                  .authenticated()
+
+                  // All other API endpoints require authentication
+                  .requestMatchers("/api/v1/**")
+                  .authenticated()
+                  // Deny all other requests
+                  .anyRequest()
+                  .denyAll();
+            })
+        .oauth2ResourceServer(
+            oauth2 ->
+                oauth2.jwt(
+                    jwt ->
+                        jwt.decoder(clerkJwtDecoder)
+                            .jwtAuthenticationConverter(clerkJwtAuthenticationConverter)))
+        .exceptionHandling(
+            exceptions ->
+                exceptions
+                    .authenticationEntryPoint(
+                        (request, response, authException) -> {
+                          log.warn(
+                              "Authentication failed: {} {} from IP: {}",
+                              request.getMethod(),
+                              request.getRequestURI(),
+                              request.getRemoteAddr());
+
+                          response.setStatus(401);
+                          response.setContentType("application/json");
+                          response
+                              .getWriter()
+                              .write(
+                                  "{\"error\":\"Authentication required\",\"message\":\"Valid JWT token is required to access this resource\"}");
                         })
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.setStatus(403);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"error\":\"Access denied\",\"message\":\"Insufficient privileges to access this resource\"}");
-                        })
-                );
+                    .accessDeniedHandler(
+                        (request, response, accessDeniedException) -> {
+                          log.warn(
+                              "Access denied: {} {} from IP: {}",
+                              request.getMethod(),
+                              request.getRequestURI(),
+                              request.getRemoteAddr());
 
-        return http.build();
-    }
+                          response.setStatus(403);
+                          response.setContentType("application/json");
+                          response
+                              .getWriter()
+                              .write(
+                                  "{\"error\":\"Access denied\",\"message\":\"Insufficient privileges to access this resource\"}");
+                        }));
 
-    /**
-     * Configures CORS using a flexible, pattern-based approach suitable for development.
-     */
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+    return http.build();
+  }
 
-        // This is the improved logic from your original CorsConfig.java
-        configuration.setAllowedOriginPatterns(List.of(
-                "http://localhost:*",
-                "http://127.0.0.1:*",
-                "http://192.168.39.138:*",
-                "exp://*" // For Expo Go development
-        ));
+  /** Configures CORS using environment-specific origins for security. */
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*")); // Allow all headers
-        configuration.setAllowCredentials(true);
+    // Parse comma-separated origins from environment variable
+    List<String> origins = Arrays.asList(allowedOriginsConfig.split(","));
+    configuration.setAllowedOriginPatterns(origins);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(List.of("*")); // Allow all headers
+    configuration.setAllowCredentials(true);
+    configuration.setMaxAge(3600L); // Cache preflight for 1 hour
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
 }

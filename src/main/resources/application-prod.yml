@@ -14,6 +14,11 @@ spring:
       max-lifetime: 1800000
       leak-detection-threshold: 60000
   
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
   jpa:
     show-sql: false
     properties:
@@ -38,10 +43,12 @@ spring:
 # Production server configuration
 server:
   port: ${PORT:8080}
+  max-http-header-size: 8KB
   tomcat:
     max-threads: 200
     min-spare-threads: 10
     connection-timeout: 20000
+    max-swallow-size: 2MB
     threads:
       max: 200
       min-spare: 10
@@ -66,14 +73,24 @@ logging:
     max-size: 100MB
     max-history: 30
 
+# Disable Swagger in production for security
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
 # Production-specific configuration
 elmify:
   security:
     rate-limiting:
       enabled: true
+
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://your-react-native-app.com}
-  
+    # Production: Only allow your actual domain(s)
+    # UPDATE THIS before deployment!
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://yourdomain.com,https://www.yourdomain.com}
+
   r2:
     endpoint: ${R2_ENDPOINT:https://b995be98e08909685abfca00c971e79e.r2.cloudflarestorage.com}
     bucket-name: ${R2_BUCKET_NAME:elmify-audio}
