@@ -21,9 +21,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.OrRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 
 /**
  * Central security configuration for the application. Enables JWT-based authentication for the API
@@ -52,6 +50,7 @@ public class SecurityConfig {
 
     http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .csrf(csrf -> csrf.disable())
+        .anonymous(anonymous -> anonymous.principal("guest").authorities("ROLE_ANONYMOUS"))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .headers(
@@ -152,35 +151,11 @@ public class SecurityConfig {
                         jwt ->
                             jwt.decoder(clerkJwtDecoder)
                                 .jwtAuthenticationConverter(clerkJwtAuthenticationConverter))
-                    // Only apply JWT validation to non-public endpoints
-                    .bearerTokenResolver(
-                        request -> {
-                          // Define public endpoints that don't require JWT
-                          RequestMatcher publicEndpoints = new OrRequestMatcher(
-                              new AntPathRequestMatcher("/api/v1/speakers/**", "GET"),
-                              new AntPathRequestMatcher("/api/v1/collections/**", "GET"),
-                              new AntPathRequestMatcher("/api/v1/lectures/**", "GET"),
-                              new AntPathRequestMatcher("/api/v1/users/sync"),
-                              new AntPathRequestMatcher("/actuator/health/**")
-                          );
-
-                          // For public endpoints, return null to skip JWT validation
-                          if (publicEndpoints.matches(request)) {
-                            return null;
-                          }
-
-                          // For other endpoints, extract bearer token normally
-                          String authHeader = request.getHeader("Authorization");
-                          if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                            return authHeader.substring(7);
-                          }
-                          return null;
-                        })
                     .authenticationEntryPoint(
                         (request, response, authException) -> {
                           // For protected endpoints, require authentication
                           log.warn(
-                              "Authentication failed: {} {} from IP: {}",
+                              "Authentication required: {} {} from IP: {}",
                               request.getMethod(),
                               request.getRequestURI(),
                               request.getRemoteAddr());
