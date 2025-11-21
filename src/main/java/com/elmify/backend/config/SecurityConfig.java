@@ -117,7 +117,16 @@ public class SecurityConfig {
               log.info("✅ Public GET endpoints configured: /speakers, /collections, /lectures");
 
               auth
-                  // ===== AUTHENTICATED ENDPOINTS (modifications) =====
+                  // ===== AUTHENTICATED ENDPOINTS =====
+                  // Playback tracking requires authentication
+                  .requestMatchers("/api/v1/playback/**")
+                  .authenticated()
+                  // User endpoints (except sync) require authentication
+                  .requestMatchers("/api/v1/users/me")
+                  .authenticated()
+                  // Favorites require authentication
+                  .requestMatchers("/api/v1/favorites/**")
+                  .authenticated()
                   // All POST/PUT/PATCH/DELETE operations require authentication
                   .requestMatchers(HttpMethod.POST, "/api/v1/**")
                   .authenticated()
@@ -127,11 +136,10 @@ public class SecurityConfig {
                   .authenticated()
                   .requestMatchers(HttpMethod.DELETE, "/api/v1/**")
                   .authenticated()
-
-                  // All other API endpoints require authentication
-                  .requestMatchers("/api/v1/**")
-                  .authenticated()
-                  // Deny all other requests
+                  // Allow any other GET requests (public browsing)
+                  .requestMatchers(HttpMethod.GET, "/api/v1/**")
+                  .permitAll()
+                  // Deny all other requests (non-API paths)
                   .anyRequest()
                   .denyAll();
 
