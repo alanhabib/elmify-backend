@@ -4,7 +4,7 @@ app:
   cors:
     allowed-origins: http://localhost:8085,http://localhost:19006
   security:
-    admin-emails: dalanhabib@gmail.com
+    admin-emails: ${ADMIN_EMAIL:admin@localhost}
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/elmify_db
@@ -63,9 +63,9 @@ elmify:
     allowed-origins: "http://localhost:*,http://127.0.0.1:*,http://192.168.39.138:*,exp://*"
 
   r2:
-    # Use production R2 for testing
-    endpoint: ${R2_ENDPOINT:https://b995be98e08909685abfca00c971e79e.r2.cloudflarestorage.com}
-    bucket-name: ${R2_BUCKET_NAME:elmify-audio}
+    # Use production R2 for testing - set R2_ENDPOINT env var
+    endpoint: ${R2_ENDPOINT}
+    bucket-name: ${R2_BUCKET_NAME}
     access-key: ${R2_ACCESS_KEY}
     secret-key: ${R2_SECRET_KEY}
     region: ${R2_REGION:auto}
@@ -78,12 +78,8 @@ elmify:
     jwt-issuer: ${CLERK_JWT_ISSUER}
   
   migration:
-    # Migration from R2 to MinIO (disabled in development since migration is complete)
-    source:
-      endpoint: https://dummy.r2.cloudflarestorage.com
-      access-key: "dummy-access-key"
-      secret-key: "dummy-secret-key"
-      bucket: elmify-audio
+    # Migration disabled - completed
+    enabled: false
 
 # Development-only features
 management:

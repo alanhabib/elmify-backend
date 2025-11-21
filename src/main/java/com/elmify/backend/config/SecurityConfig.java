@@ -45,8 +45,7 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    log.info("🔒 Configuring security with profile: {}", activeProfile);
-    log.info("🌐 CORS allowed origins: {}", allowedOriginsConfig);
+    log.info("Configuring security filter chain for profile: {}", activeProfile);
 
     http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .csrf(csrf -> csrf.disable())
@@ -76,8 +75,6 @@ public class SecurityConfig {
                             permissions.policy("camera=(), microphone=(), geolocation=()")))
         .authorizeHttpRequests(
             authorize -> {
-              log.info("🔒 Configuring HTTP request authorization...");
-
               var auth =
                   authorize
                       // Public health check endpoints
@@ -86,7 +83,6 @@ public class SecurityConfig {
 
               // Swagger only in development
               if ("dev".equals(activeProfile)) {
-                log.info("📚 Enabling Swagger for development profile");
                 auth =
                     auth.requestMatchers(
                             "/swagger-ui.html",
@@ -95,34 +91,19 @@ public class SecurityConfig {
                             "/swagger-resources/**",
                             "/webjars/**")
                         .permitAll();
-              } else {
-                log.info("📚 Swagger DISABLED for profile: {}", activeProfile);
               }
 
-              log.info("🔓 Adding permitAll for /api/v1/users/sync");
               auth
                   // Public user sync endpoint (called during authentication)
                   .requestMatchers("/api/v1/users/sync")
-                  .permitAll();
-
-              log.info("🔓 Adding permitAll for GET /api/v1/speakers/**");
-              auth
+                  .permitAll()
                   // ===== PUBLIC GET ENDPOINTS (for browsing/streaming) =====
-                  // Allow public GET access for browsing content
                   .requestMatchers(HttpMethod.GET, "/api/v1/speakers/**")
-                  .permitAll();
-
-              log.info("🔓 Adding permitAll for GET /api/v1/collections/**");
-              auth
+                  .permitAll()
                   .requestMatchers(HttpMethod.GET, "/api/v1/collections/**")
-                  .permitAll();
-
-              log.info("🔓 Adding permitAll for GET /api/v1/lectures/**");
-              auth
+                  .permitAll()
                   .requestMatchers(HttpMethod.GET, "/api/v1/lectures/**")
                   .permitAll();
-
-              log.info("✅ Public GET endpoints configured: /speakers, /collections, /lectures");
 
               auth
                   // ===== AUTHENTICATED ENDPOINTS =====
@@ -150,8 +131,6 @@ public class SecurityConfig {
                   // Deny all other requests (non-API paths)
                   .anyRequest()
                   .denyAll();
-
-              log.info("✅ Security configuration complete");
             })
         .oauth2ResourceServer(
             oauth2 ->
@@ -205,17 +184,19 @@ public class SecurityConfig {
     // Parse comma-separated origins from environment variable
     List<String> origins = Arrays.asList(allowedOriginsConfig.split(","));
 
-    // Check if using wildcard (temporary for testing)
+    // Check if using wildcard (development only)
     boolean isWildcard = origins.contains("*") || allowedOriginsConfig.equals("*");
 
     if (isWildcard) {
-      // Wildcard mode: allow all origins (TESTING ONLY)
-      log.warn("⚠️ CORS: Allowing ALL origins (*) - This is NOT secure for production!");
+      if (!"dev".equals(activeProfile)) {
+        log.error("CORS wildcard (*) is not allowed in production! Configure specific origins.");
+        throw new IllegalStateException("CORS wildcard not allowed in production");
+      }
+      log.warn("CORS: Allowing ALL origins (*) - development only");
       configuration.setAllowedOriginPatterns(List.of("*"));
-      configuration.setAllowCredentials(false); // Cannot use credentials with wildcard
+      configuration.setAllowCredentials(false);
     } else {
-      // Production mode: specific origins
-      log.info("CORS: Allowing specific origins: {}", origins);
+      log.info("CORS: Configured {} allowed origins", origins.size());
       configuration.setAllowedOriginPatterns(origins);
       configuration.setAllowCredentials(true);
     }

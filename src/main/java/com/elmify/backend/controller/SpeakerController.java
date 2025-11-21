@@ -11,7 +11,6 @@ import com.elmify.backend.service.StorageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,12 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Secure, read-only REST controller for browsing speakers.
- * All endpoints require an authenticated user.
+ * Public REST controller for browsing speakers.
+ * GET endpoints are public for guest browsing.
  */
 @RestController
 @RequestMapping("/api/v1/speakers")
-@Tag(name = "Speakers", description = "Endpoints for browsing speakers (Authentication Required)")
+@Tag(name = "Speakers", description = "Endpoints for browsing speakers")
 @RequiredArgsConstructor
 public class SpeakerController {
 
@@ -37,9 +36,8 @@ public class SpeakerController {
 
     @GetMapping
     @Operation(summary = "Get All Speakers (Paginated)",
-            description = "Retrieves a paginated list of all speakers with mobile-optimized pagination metadata. Requires authentication.")
+            description = "Retrieves a paginated list of all speakers with mobile-optimized pagination metadata. Public endpoint.")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved speakers")
-    @ApiResponse(responseCode = "401", description = "Authentication required")
     public ResponseEntity<PagedResponse<SpeakerDto>> getAllSpeakers(Pageable pageable) {
         Page<SpeakerDto> speakersPage = speakerService.getAllSpeakers(pageable);
         PagedResponse<SpeakerDto> response = PagedResponse.from(speakersPage);
@@ -48,9 +46,8 @@ public class SpeakerController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get Speaker by ID",
-            description = "Retrieves a specific speaker by their ID. Requires authentication.")
+            description = "Retrieves a specific speaker by their ID. Public endpoint.")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved speaker")
-    @ApiResponse(responseCode = "401", description = "Authentication required")
     @ApiResponse(responseCode = "404", description = "Speaker not found")
     public ResponseEntity<SpeakerDto> getSpeakerById(
             @Parameter(description = "The ID of the speaker") @PathVariable Long id) {
@@ -61,9 +58,8 @@ public class SpeakerController {
 
     @GetMapping("/{id}/collections")
     @Operation(summary = "Get Collections by Speaker ID",
-            description = "Retrieves all collections by a specific speaker. Requires authentication.")
+            description = "Retrieves all collections by a specific speaker. Public endpoint.")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved collections")
-    @ApiResponse(responseCode = "401", description = "Authentication required")
     @ApiResponse(responseCode = "404", description = "Speaker not found")
     @Transactional(readOnly = true)
     public ResponseEntity<PagedResponse<CollectionDto>> getCollectionsBySpeakerId(
@@ -83,9 +79,8 @@ public class SpeakerController {
 
     @GetMapping("/{id}/lectures")
     @Operation(summary = "Get Lectures by Speaker ID",
-            description = "Retrieves all lectures by a specific speaker across all collections. Requires authentication.")
+            description = "Retrieves all lectures by a specific speaker across all collections. Public endpoint.")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved lectures")
-    @ApiResponse(responseCode = "401", description = "Authentication required")
     @ApiResponse(responseCode = "404", description = "Speaker not found")
     @Transactional(readOnly = true)
     public ResponseEntity<PagedResponse<LectureDto>> getLecturesBySpeakerId(

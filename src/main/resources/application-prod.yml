@@ -88,12 +88,12 @@ elmify:
 
   cors:
     # React Native doesn't have CORS, but keeping this for web dashboard/future use
-    # For production web app, set: CORS_ALLOWED_ORIGINS=https://yourdomain.com
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:*,https://*}
+    # Set CORS_ALLOWED_ORIGINS in Railway for any web clients
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://elmify.store,https://www.elmify.store}
 
   r2:
-    endpoint: ${R2_ENDPOINT:https://b995be98e08909685abfca00c971e79e.r2.cloudflarestorage.com}
-    bucket-name: ${R2_BUCKET_NAME:elmify-audio}
+    endpoint: ${R2_ENDPOINT}
+    bucket-name: ${R2_BUCKET_NAME}
     access-key: ${R2_ACCESS_KEY}
     secret-key: ${R2_SECRET_KEY}
     region: ${R2_REGION:auto}

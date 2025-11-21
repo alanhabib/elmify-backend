@@ -5,6 +5,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.core.Authentication;
@@ -16,11 +18,12 @@ import java.io.IOException;
 
 /**
  * Debug filter to log all requests and their authentication state.
- * This runs AFTER Spring Security to see the final auth state.
+ * Only enabled when elmify.debug.request-logging=true (disabled by default).
  */
 @Component
 @Order(Ordered.LOWEST_PRECEDENCE)
 @Slf4j
+@ConditionalOnProperty(name = "elmify.debug.request-logging", havingValue = "true", matchIfMissing = false)
 public class RequestLoggingFilter extends OncePerRequestFilter {
 
     @Override
@@ -34,7 +37,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        log.info("🔍 REQUEST: {} {} | Auth: {} | Principal: {} | Authorities: {} | HasToken: {}",
+        log.debug("REQUEST: {} {} | Auth: {} | Principal: {} | Authorities: {} | HasToken: {}",
             method,
             uri,
             auth != null ? auth.getClass().getSimpleName() : "null",
@@ -46,7 +49,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(request, response);
         } finally {
-            log.info("🔍 RESPONSE: {} {} | Status: {}", method, uri, response.getStatus());
+            log.debug("RESPONSE: {} {} | Status: {}", method, uri, response.getStatus());
         }
     }
 }

@@ -20,7 +20,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -129,15 +128,9 @@ public class LectureController {
     @ApiResponse(responseCode = "404", description = "Lecture or audio file not found")
     @ApiResponse(responseCode = "500", description = "Failed to generate URL")
     public ResponseEntity<Map<String, String>> getStreamUrl(@PathVariable Long id) {
-        long startTime = System.currentTimeMillis();
-        logger.info("🎵 Stream URL request for lecture ID: {}", id);
-
         try {
-            long dbStart = System.currentTimeMillis();
             Lecture lecture = lectureService.getLectureById(id)
                     .orElseThrow(() -> new RuntimeException("Lecture not found"));
-            long dbTime = System.currentTimeMillis() - dbStart;
-            logger.info("✓ Database fetch took: {}ms", dbTime);
 
             // After getting the URL, increment the play count as an optimistic update.
             lectureService.incrementPlayCount(id);
@@ -153,18 +146,12 @@ public class LectureController {
                     throw new RuntimeException("File path not found for lecture");
                 }
                 cdnUrl = "https://cdn.elmify.store/" + filePath;
-                logger.info("Using file_path fallback: {}", filePath);
             }
-
-            long totalTime = System.currentTimeMillis() - startTime;
-            logger.info("✓ Total request time: {}ms", totalTime);
-            logger.info("📋 Returning CDN URL: {}", cdnUrl);
 
             return ResponseEntity.ok(Map.of("url", cdnUrl));
 
         } catch (RuntimeException e) {
-            long totalTime = System.currentTimeMillis() - startTime;
-            logger.error("❌ Failed to generate stream URL for lecture ID {} after {}ms: {}", id, totalTime, e.getMessage());
+            logger.error("Failed to generate stream URL for lecture ID {}: {}", id, e.getMessage());
             // Check if the exception message indicates a "not found" scenario
             if (e.getMessage().contains("not found")) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
@@ -186,7 +173,7 @@ public class LectureController {
             // Validate authentication - either from token param or Authorization header
             // Token param is used by iOS TrackPlayer which can't send custom headers
             if (tokenParam == null && authHeader == null) {
-                logger.warn("🔒 Unauthorized stream request for lecture ID: {}", id);
+                logger.warn("Unauthorized stream request for lecture ID: {}", id);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
 
@@ -196,8 +183,7 @@ public class LectureController {
             Lecture lecture = lectureService.getLectureById(id)
                     .orElseThrow(() -> new RuntimeException("Lecture not found"));
 
-            logger.info("🎵 Streaming audio for lecture ID: {} (Range: {}, Auth: {})",
-                id, rangeHeader, tokenParam != null ? "token-param" : "header");
+            logger.debug("Streaming audio for lecture ID: {} (Range: {})", id, rangeHeader);
 
             // Get object metadata first to know the size
             var metadata = storageService.getObjectMetadata(lecture.getFilePath());
@@ -216,8 +202,7 @@ public class LectureController {
                 long end = requestedEnd;
                 end = Math.min(end, fileSize - 1);
 
-                logger.info("📦 Serving range: bytes={}-{}/{} (requested: {}-{})",
-                    start, end, fileSize, start, requestedEnd);
+                logger.debug("Serving range: bytes={}-{}/{}", start, end, fileSize);
 
                 // Stream only the requested range from R2
                 var rangedStream = storageService.getObjectStreamRange(lecture.getFilePath(), start, end);
