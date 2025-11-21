@@ -54,9 +54,14 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
                         // Public user sync endpoint (called during authentication)
                         .requestMatchers("/api/v1/users/sync").permitAll()
-                        // Public audio streaming endpoint (authentication via token param)
+                        // Public audio streaming endpoints (for guest mode)
                         .requestMatchers("/api/v1/lectures/*/stream").permitAll()
-                        // All API endpoints require authentication
+                        .requestMatchers("/api/v1/lectures/*/stream-url").permitAll()
+                        // Public browsing endpoints (speakers, collections, lectures)
+                        .requestMatchers("/api/v1/speakers/**").permitAll()
+                        .requestMatchers("/api/v1/collections/**").permitAll()
+                        .requestMatchers("/api/v1/lectures/**").permitAll()
+                        // All other API endpoints require authentication
                         .requestMatchers("/api/v1/**").authenticated()
                         // Deny all other requests
                         .anyRequest().denyAll()
