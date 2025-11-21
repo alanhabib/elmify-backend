@@ -21,6 +21,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+
 /**
  * Central security configuration for the application. Enables JWT-based authentication for the API
  * and configures CORS.
@@ -140,28 +144,37 @@ public class SecurityConfig {
                         jwt ->
                             jwt.decoder(clerkJwtDecoder)
                                 .jwtAuthenticationConverter(clerkJwtAuthenticationConverter))
-                    // Make JWT authentication optional - don't reject requests without valid tokens
-                    .authenticationEntryPoint(
-                        (request, response, authException) -> {
-                          // For public endpoints, treat missing/invalid JWT as anonymous user
-                          // This allows permitAll() to work properly
-                          String uri = request.getRequestURI();
-                          if (uri.startsWith("/api/v1/speakers")
-                              || uri.startsWith("/api/v1/collections")
-                              || uri.startsWith("/api/v1/lectures")
-                              || uri.startsWith("/actuator/health")
-                              || uri.startsWith("/api/v1/users/sync")) {
-                            // Public endpoint - allow through without authentication
-                            log.debug("Public endpoint accessed without JWT: {}", uri);
-                            response.setStatus(200); // Will be handled by the actual controller
-                            return;
+                    // Only apply JWT validation to non-public endpoints
+                    .bearerTokenResolver(
+                        request -> {
+                          // Define public endpoints that don't require JWT
+                          RequestMatcher publicEndpoints = new OrRequestMatcher(
+                              new AntPathRequestMatcher("/api/v1/speakers/**", "GET"),
+                              new AntPathRequestMatcher("/api/v1/collections/**", "GET"),
+                              new AntPathRequestMatcher("/api/v1/lectures/**", "GET"),
+                              new AntPathRequestMatcher("/api/v1/users/sync"),
+                              new AntPathRequestMatcher("/actuator/health/**")
+                          );
+
+                          // For public endpoints, return null to skip JWT validation
+                          if (publicEndpoints.matches(request)) {
+                            return null;
                           }
 
+                          // For other endpoints, extract bearer token normally
+                          String authHeader = request.getHeader("Authorization");
+                          if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                            return authHeader.substring(7);
+                          }
+                          return null;
+                        })
+                    .authenticationEntryPoint(
+                        (request, response, authException) -> {
                           // For protected endpoints, require authentication
                           log.warn(
                               "Authentication failed: {} {} from IP: {}",
                               request.getMethod(),
-                              uri,
+                              request.getRequestURI(),
                               request.getRemoteAddr());
 
                           response.setStatus(401);
