@@ -72,7 +72,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException e, HttpServletRequest request) {
         String traceId = generateTraceId();
-        log.warn("Access denied: {} [traceId: {}]", e.getMessage(), traceId);
+        log.warn("🚫 ACCESS DENIED: {} {} | Message: {} | Auth Header: {} [traceId: {}]",
+            request.getMethod(),
+            request.getRequestURI(),
+            e.getMessage(),
+            request.getHeader("Authorization") != null ? "present" : "absent",
+            traceId);
         
         ErrorResponse error = new ErrorResponse(
             HttpStatus.FORBIDDEN.value(),

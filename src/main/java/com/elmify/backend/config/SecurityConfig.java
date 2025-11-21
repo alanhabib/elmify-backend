@@ -99,17 +99,26 @@ public class SecurityConfig {
                 log.info("📚 Swagger DISABLED for profile: {}", activeProfile);
               }
 
+              log.info("🔓 Adding permitAll for /api/v1/users/sync");
               auth
                   // Public user sync endpoint (called during authentication)
                   .requestMatchers("/api/v1/users/sync")
-                  .permitAll()
+                  .permitAll();
 
+              log.info("🔓 Adding permitAll for GET /api/v1/speakers/**");
+              auth
                   // ===== PUBLIC GET ENDPOINTS (for browsing/streaming) =====
                   // Allow public GET access for browsing content
                   .requestMatchers(HttpMethod.GET, "/api/v1/speakers/**")
-                  .permitAll()
+                  .permitAll();
+
+              log.info("🔓 Adding permitAll for GET /api/v1/collections/**");
+              auth
                   .requestMatchers(HttpMethod.GET, "/api/v1/collections/**")
-                  .permitAll()
+                  .permitAll();
+
+              log.info("🔓 Adding permitAll for GET /api/v1/lectures/**");
+              auth
                   .requestMatchers(HttpMethod.GET, "/api/v1/lectures/**")
                   .permitAll();
 
