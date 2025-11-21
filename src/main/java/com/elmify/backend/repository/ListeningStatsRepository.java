@@ -3,6 +3,7 @@ package com.elmify.backend.repository;
 import com.elmify.backend.entity.ListeningStats;
 import com.elmify.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -105,4 +106,10 @@ public interface ListeningStatsRepository extends JpaRepository<ListeningStats, 
      */
     @Query("SELECT COUNT(DISTINCT ls.lecture.id) FROM ListeningStats ls WHERE ls.user = :user")
     Long getUniqueLecturesCount(@Param("user") User user);
+
+    /**
+     * Delete all listening stats for a user
+     */
+    @Modifying
+    void deleteByUser(User user);
 }

@@ -3,6 +3,7 @@ package com.elmify.backend.repository;
 import com.elmify.backend.entity.PlaybackPosition;
 import com.elmify.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -52,4 +53,10 @@ public interface PlaybackPositionRepository extends JpaRepository<PlaybackPositi
      * Check if playback position exists
      */
     boolean existsByUserAndLectureId(User user, Long lectureId);
+
+    /**
+     * Delete all playback positions for a user
+     */
+    @Modifying
+    void deleteByUser(User user);
 }

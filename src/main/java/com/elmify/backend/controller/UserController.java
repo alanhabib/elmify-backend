@@ -14,9 +14,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Controller for handling user-related operations, primarily for syncing user data
@@ -117,5 +119,41 @@ public class UserController {
         log.info("Admin request to get all users");
         Page<UserDto> users = userService.findAllUsers(pageable);
         return ResponseEntity.ok(users);
+    }
+
+    /**
+     * Delete the authenticated user's account.
+     * Requires email confirmation to prevent accidental deletion.
+     * This permanently deletes all user data including favorites, playback history, and the Clerk account.
+     */
+    @DeleteMapping("/me")
+    @Operation(summary = "Delete User Account",
+            description = "Permanently deletes the authenticated user's account and all associated data. Requires email confirmation.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(responseCode = "204", description = "Account deleted successfully")
+    @ApiResponse(responseCode = "400", description = "Email confirmation does not match")
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteAccount(
+            Authentication authentication,
+            @RequestParam("confirmEmail") String confirmEmail) {
+        String clerkId = authentication.getName();
+        log.info("Account deletion request for user: {}", clerkId);
+
+        // Get user to verify email
+        UserDto user = userService.findByClerkId(clerkId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        // Verify email confirmation
+        if (!user.email().equalsIgnoreCase(confirmEmail.trim())) {
+            log.warn("Email confirmation mismatch for user: {}", clerkId);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email confirmation does not match");
+        }
+
+        // Delete user and all associated data
+        userService.deleteUserAccount(clerkId);
+
+        log.info("Account deleted successfully for user: {}", clerkId);
+        return ResponseEntity.noContent().build();
     }
 }

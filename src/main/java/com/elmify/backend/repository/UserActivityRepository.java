@@ -5,6 +5,7 @@ import com.elmify.backend.entity.UserActivity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -145,4 +146,8 @@ public interface UserActivityRepository extends JpaRepository<UserActivity, Long
   // Delete old activities (for cleanup)
   @Query("DELETE FROM UserActivity ua WHERE ua.createdAt < :cutoffDate")
   void deleteOldActivities(@Param("cutoffDate") LocalDateTime cutoffDate);
+
+  // Delete all activities for a user
+  @Modifying
+  void deleteByUser(User user);
 }

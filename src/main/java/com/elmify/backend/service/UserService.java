@@ -4,6 +4,10 @@ import com.elmify.backend.dto.UserDto;
 import com.elmify.backend.dto.UserPreferencesDto;
 import com.elmify.backend.dto.UserSyncDto;
 import com.elmify.backend.entity.User;
+import com.elmify.backend.repository.FavoriteRepository;
+import com.elmify.backend.repository.ListeningStatsRepository;
+import com.elmify.backend.repository.PlaybackPositionRepository;
+import com.elmify.backend.repository.UserActivityRepository;
 import com.elmify.backend.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +34,11 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final FavoriteRepository favoriteRepository;
+    private final PlaybackPositionRepository playbackPositionRepository;
+    private final ListeningStatsRepository listeningStatsRepository;
+    private final UserActivityRepository userActivityRepository;
+    private final ClerkService clerkService;
     private final ObjectMapper objectMapper;
 
     /**
@@ -138,6 +147,52 @@ public class UserService {
         } catch (Exception e) {
             log.error("Failed to update preferences for user {}", clerkId, e);
             throw new RuntimeException("Failed to update preferences: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Delete a user account and all associated data.
+     * This permanently removes:
+     * - Clerk authentication account (deleted first - external system)
+     * - Favorites
+     * - Playback positions
+     * - Listening stats
+     * - User activity logs
+     * - User profile
+     *
+     * Order matters: Delete from Clerk first, then database.
+     * If Clerk fails, database remains intact and user can retry.
+     * If database fails after Clerk deletion, user can't login anyway (acceptable).
+     *
+     * @param clerkId The Clerk ID of the user to delete
+     */
+    public void deleteUserAccount(String clerkId) {
+        User user = userRepository.findByClerkId(clerkId)
+            .orElseThrow(() -> new RuntimeException("User not found with clerkId: " + clerkId));
+
+        log.info("Starting account deletion for user [{}]", clerkId);
+
+        // Step 1: Delete from Clerk FIRST (external system)
+        // If this fails, database remains intact and user can retry
+        clerkService.deleteUser(clerkId);
+        log.info("Deleted Clerk account for user [{}]", clerkId);
+
+        // Step 2: Delete all related data (foreign key constraints)
+        // These are all within the same transaction
+        try {
+            favoriteRepository.deleteByUser(user);
+            playbackPositionRepository.deleteByUser(user);
+            listeningStatsRepository.deleteByUser(user);
+            userActivityRepository.deleteByUser(user);
+            userRepository.delete(user);
+
+            log.info("Deleted all database records for user [{}]", clerkId);
+        } catch (Exception e) {
+            // Clerk already deleted, so user can't login anyway
+            // Log error but don't throw - partial cleanup is acceptable
+            log.error("Failed to delete database records for user [{}] after Clerk deletion: {}",
+                clerkId, e.getMessage());
+            throw new RuntimeException("Account deleted from Clerk but database cleanup failed. Please contact support.", e);
         }
     }
 }
