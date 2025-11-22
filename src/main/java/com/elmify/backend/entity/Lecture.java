@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -104,6 +106,10 @@ public class Lecture {
     @JoinColumn(name = "collection_id")
     @ToString.Exclude // Avoid circular dependencies in toString
     private Collection collection;
+
+    @OneToMany(mappedBy = "lecture", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private Set<LectureCategory> lectureCategories = new HashSet<>();
 
     // --- Timestamps ---
     @Column(name = "uploaded_at")

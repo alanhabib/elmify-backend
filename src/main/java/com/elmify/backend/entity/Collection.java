@@ -14,7 +14,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Collection entity representing a collection of lectures by a speaker.
@@ -66,6 +68,10 @@ public class Collection {
     @OneToMany(mappedBy = "collection", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude // Avoid fetching a potentially large list for toString
     private List<Lecture> lectures = new ArrayList<>();
+
+    @OneToMany(mappedBy = "collection", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private Set<CollectionCategory> collectionCategories = new HashSet<>();
 
     // --- Calculated Fields ---
     // This is a great performance optimization. It calculates the count in the DB.
