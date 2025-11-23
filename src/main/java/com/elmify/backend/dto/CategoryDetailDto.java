@@ -50,7 +50,7 @@ public record CategoryDetailDto(
             category.getLectureCount(),
             category.getCollectionCount(),
             category.getIsFeatured(),
-            subcategories.stream().map(CategoryDto::fromEntityWithoutParent).toList(),
+            subcategories.stream().map(CategoryDto::fromEntity).toList(),
             featuredCollections.stream()
                 .map(c -> CollectionDto.fromEntity(c, storageService))
                 .toList()
