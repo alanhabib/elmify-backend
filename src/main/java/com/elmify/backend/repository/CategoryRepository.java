@@ -25,7 +25,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findAllFeatured();
 
     /**
-     * Find by slug with parent eagerly loaded.
+     * Find by slug.
      */
     Optional<Category> findBySlugAndIsActiveTrue(String slug);
 

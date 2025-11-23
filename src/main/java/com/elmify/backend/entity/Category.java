@@ -95,9 +95,9 @@ public class Category {
     }
 
     /**
-     * Get the parent category ID without triggering lazy loading.
-     * This method safely accesses the parent ID by checking if the parent
-     * is initialized before accessing it.
+     * Get the parent category ID.
+     * Note: This may trigger lazy loading if the parent is not already initialized.
+     * Use queries with JOIN FETCH c.parent to avoid lazy loading issues.
      *
      * @return The parent category ID, or null if there is no parent.
      */
