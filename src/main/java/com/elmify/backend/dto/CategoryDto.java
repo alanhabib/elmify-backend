@@ -40,8 +40,10 @@ public record CategoryDto(
     }
 
     /**
-     * Create a CategoryDto from a Category entity without accessing the parent.
-     * Used for subcategories where parent relationship is not needed and may not be initialized.
+     * Create a CategoryDto from a Category entity, safely handling lazy-loaded parent.
+     * This method uses getParentId() which only accesses the parent if already initialized,
+     * preventing LazyInitializationException. Best used for subcategories where parent
+     * relationship may not be eagerly fetched.
      *
      * @param category The Category entity from the database.
      * @return A new CategoryDto instance. The parentId will be null if parent is not initialized.
