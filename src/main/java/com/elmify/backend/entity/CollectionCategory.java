@@ -1,8 +1,10 @@
 package com.elmify.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -12,11 +14,14 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "collection_categories")
 @EntityListeners(AuditingEntityListener.class)
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
 public class CollectionCategory {
 
     @EmbeddedId
+    @EqualsAndHashCode.Include
     private CollectionCategoryId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
