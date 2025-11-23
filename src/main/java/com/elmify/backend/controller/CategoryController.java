@@ -70,7 +70,7 @@ public class CategoryController {
         Category category = categoryService.getCategoryBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "slug", slug));
 
-        List<Category> subcategories = categoryService.getSubcategories(category.getId());
+        List<Category> subcategories = category.getSubcategories();
         List<Collection> featuredCollections = categoryService.getFeaturedCollectionsForCategory(slug);
 
         CategoryDetailDto dto = CategoryDetailDto.fromEntity(
