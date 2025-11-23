@@ -89,7 +89,7 @@ public class CategoryController {
     @ApiResponse(responseCode = "200", description = "Successfully retrieved subcategories")
     @ApiResponse(responseCode = "404", description = "Category not found")
     public ResponseEntity<List<CategoryDto>> getSubcategories(
-            @Parameter(description = "Parent category slug", example = "quran")
+            @Parameter(description = "Parent category slug", example = "quran-tafsir")
             @PathVariable String slug) {
         Category parent = categoryService.getCategoryBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "slug", slug));
