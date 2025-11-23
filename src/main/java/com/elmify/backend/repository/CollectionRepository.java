@@ -67,8 +67,7 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
     @Query(value = "SELECT DISTINCT c FROM Collection c " +
             "LEFT JOIN FETCH c.speaker " +
             "JOIN c.collectionCategories cc " +
-            "WHERE cc.category.slug = :categorySlug " +
-            "ORDER BY c.lectureCount DESC",
+            "WHERE cc.category.slug = :categorySlug",
             countQuery = "SELECT COUNT(DISTINCT c) FROM Collection c " +
                     "JOIN c.collectionCategories cc " +
                     "WHERE cc.category.slug = :categorySlug")
