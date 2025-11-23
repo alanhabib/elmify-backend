@@ -452,15 +452,13 @@ public class LectureCategoryId implements Serializable {
 ```
 
 ```java
-// Update Lecture.java - Add categories relationship
-@ManyToMany(fetch = FetchType.LAZY)
-@JoinTable(
-    name = "lecture_categories",
-    joinColumns = @JoinColumn(name = "lecture_id"),
-    inverseJoinColumns = @JoinColumn(name = "category_id")
-)
-private Set<Category> categories = new HashSet<>();
+// Update Lecture.java - Add categories relationship via junction entity
+// Instead of a direct @ManyToMany, use an explicit junction entity to allow for additional metadata (e.g., is_primary).
+@OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
+private Set<LectureCategory> lectureCategories = new HashSet<>();
 
+// Access categories via lectureCategories if needed:
+// lectureCategories.stream().map(LectureCategory::getCategory).collect(Collectors.toSet());
 @Deprecated // Will be removed after migration to categories
 @Column(name = "genre")
 private String genre;
