@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.Hibernate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -95,13 +96,15 @@ public class Category {
     }
 
     /**
-     * Get the parent category ID.
-     * Note: This may trigger lazy loading if the parent is not already initialized.
-     * Use queries with JOIN FETCH c.parent to avoid lazy loading issues.
+     * Get the parent category ID without triggering lazy loading.
+     * This method checks if the parent is initialized before accessing it.
      *
-     * @return The parent category ID, or null if there is no parent.
+     * @return The parent category ID, or null if there is no parent or if parent is not initialized.
      */
     public Long getParentId() {
-        return parent != null ? parent.getId() : null;
+        if (parent != null && Hibernate.isInitialized(parent)) {
+            return parent.getId();
+        }
+        return null;
     }
 }
