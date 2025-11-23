@@ -98,8 +98,14 @@ public class Category {
     /**
      * Get the parent category ID without triggering lazy loading.
      * This method checks if the parent is initialized before accessing it.
+     * 
+     * Important: This returns null in two cases:
+     * 1. When the category has no parent (is a top-level category)
+     * 2. When the parent relationship is not initialized (not eagerly fetched)
+     * 
+     * To ensure the parent ID is available, use repository queries with JOIN FETCH c.parent.
      *
-     * @return The parent category ID, or null if there is no parent or if parent is not initialized.
+     * @return The parent category ID if parent is initialized, or null otherwise.
      */
     public Long getParentId() {
         if (parent != null && Hibernate.isInitialized(parent)) {

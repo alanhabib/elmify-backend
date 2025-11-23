@@ -41,10 +41,10 @@ public record CategoryDto(
 
     /**
      * Create a CategoryDto from a Category entity without accessing the parent.
-     * Used for subcategories where parent relationship is not needed.
+     * Used for subcategories where parent relationship is not needed and may not be initialized.
      *
      * @param category The Category entity from the database.
-     * @return A new CategoryDto instance with null parentId.
+     * @return A new CategoryDto instance. The parentId will be null if parent is not initialized.
      */
     public static CategoryDto fromEntityWithoutParent(Category category) {
         return new CategoryDto(
@@ -54,7 +54,7 @@ public record CategoryDto(
             category.getDescription(),
             category.getIconName(),
             category.getColor(),
-            null, // Don't access parent to avoid lazy loading
+            category.getParentId(), // Returns null if parent is not initialized
             category.getLectureCount(),
             category.getCollectionCount(),
             category.getIsFeatured()
