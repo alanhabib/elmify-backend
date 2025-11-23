@@ -32,7 +32,7 @@ public record CategoryDto(
             category.getDescription(),
             category.getIconName(),
             category.getColor(),
-            category.getParentId(),
+            category.getParent() != null ? category.getParent().getId() : null,
             category.getLectureCount(),
             category.getCollectionCount(),
             category.getIsFeatured()
