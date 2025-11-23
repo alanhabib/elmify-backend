@@ -19,9 +19,9 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findAllTopLevel();
 
     /**
-     * Find all featured categories.
+     * Find all featured categories with parent eagerly loaded.
      */
-    @Query("SELECT c FROM Category c WHERE c.isActive = true AND c.isFeatured = true ORDER BY c.displayOrder")
+    @Query("SELECT c FROM Category c LEFT JOIN FETCH c.parent WHERE c.isActive = true AND c.isFeatured = true ORDER BY c.displayOrder")
     List<Category> findAllFeatured();
 
     /**
@@ -30,9 +30,9 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Optional<Category> findBySlugAndIsActiveTrue(String slug);
 
     /**
-     * Find by slug with subcategories eagerly loaded.
+     * Find by slug with subcategories and parent eagerly loaded.
      */
-    @Query("SELECT c FROM Category c LEFT JOIN FETCH c.subcategories WHERE c.slug = :slug AND c.isActive = true")
+    @Query("SELECT c FROM Category c LEFT JOIN FETCH c.subcategories LEFT JOIN FETCH c.parent WHERE c.slug = :slug AND c.isActive = true")
     Optional<Category> findBySlugWithSubcategories(@Param("slug") String slug);
 
     /**

@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.Hibernate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -92,5 +93,24 @@ public class Category {
         this.name = name;
         this.slug = slug;
         this.description = description;
+    }
+
+    /**
+     * Get the parent category ID without triggering lazy loading.
+     * This method checks if the parent is initialized before accessing it.
+     * 
+     * Important: This returns null in two cases:
+     * 1. When the category has no parent (is a top-level category)
+     * 2. When the parent relationship is not initialized (not eagerly fetched)
+     * 
+     * To ensure the parent ID is available, use repository queries with JOIN FETCH c.parent.
+     *
+     * @return The parent category ID if parent is initialized, or null otherwise.
+     */
+    public Long getParentId() {
+        if (parent != null && Hibernate.isInitialized(parent)) {
+            return parent.getId();
+        }
+        return null;
     }
 }
