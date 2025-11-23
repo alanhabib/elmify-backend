@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,15 +104,14 @@ public class CategoryService {
 
     /**
      * Retrieves featured collections for a category (limited to top 5).
+     * Sorted by lecture count in descending order.
      *
      * @param categorySlug The category slug.
      * @return List of top Collection entities in the category.
      */
     public List<Collection> getFeaturedCollectionsForCategory(String categorySlug) {
-        Page<Collection> collections = collectionRepository.findByCategorySlug(
-                categorySlug,
-                PageRequest.of(0, 5)
-        );
+        Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "lectureCount"));
+        Page<Collection> collections = collectionRepository.findByCategorySlug(categorySlug, pageable);
         return collections.getContent();
     }
 }

@@ -4,6 +4,7 @@ import com.elmify.backend.entity.Collection;
 import com.elmify.backend.entity.Speaker;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -59,16 +60,16 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
     /**
      * Find collections by category slug with speaker eagerly loaded.
      * Used for featured collections in category detail view.
+     * Uses entity graph to avoid Hibernate in-memory pagination warning.
      *
      * @param categorySlug The category slug.
      * @param pageable Pagination information.
      * @return A Page of Collection entities in the category.
      */
+    @EntityGraph(value = "Collection.withSpeaker", type = EntityGraph.EntityGraphType.FETCH)
     @Query(value = "SELECT DISTINCT c FROM Collection c " +
-            "LEFT JOIN FETCH c.speaker " +
             "JOIN c.collectionCategories cc " +
-            "WHERE cc.category.slug = :categorySlug " +
-            "ORDER BY c.lectureCount DESC",
+            "WHERE cc.category.slug = :categorySlug",
             countQuery = "SELECT COUNT(DISTINCT c) FROM Collection c " +
                     "JOIN c.collectionCategories cc " +
                     "WHERE cc.category.slug = :categorySlug")
