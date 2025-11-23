@@ -93,4 +93,15 @@ public class Category {
         this.slug = slug;
         this.description = description;
     }
+
+    /**
+     * Get the parent category ID without triggering lazy loading.
+     * This method safely accesses the parent ID by checking if the parent
+     * is initialized before accessing it.
+     *
+     * @return The parent category ID, or null if there is no parent.
+     */
+    public Long getParentId() {
+        return parent != null ? parent.getId() : null;
+    }
 }

@@ -38,4 +38,26 @@ public record CategoryDto(
             category.getIsFeatured()
         );
     }
+
+    /**
+     * Create a CategoryDto from a Category entity without accessing the parent.
+     * Used for subcategories where parent relationship is not needed.
+     *
+     * @param category The Category entity from the database.
+     * @return A new CategoryDto instance with null parentId.
+     */
+    public static CategoryDto fromEntityWithoutParent(Category category) {
+        return new CategoryDto(
+            category.getId(),
+            category.getName(),
+            category.getSlug(),
+            category.getDescription(),
+            category.getIconName(),
+            category.getColor(),
+            null, // Don't access parent to avoid lazy loading
+            category.getLectureCount(),
+            category.getCollectionCount(),
+            category.getIsFeatured()
+        );
+    }
 }
