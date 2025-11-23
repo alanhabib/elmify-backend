@@ -32,7 +32,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     /**
      * Find by slug with subcategories eagerly loaded.
      */
-    @Query("SELECT c FROM Category c LEFT JOIN FETCH c.subcategories WHERE c.slug = :slug AND c.isActive = true")
+    @Query("SELECT DISTINCT c FROM Category c LEFT JOIN FETCH c.subcategories WHERE c.slug = :slug AND c.isActive = true")
     Optional<Category> findBySlugWithSubcategories(@Param("slug") String slug);
 
     /**
