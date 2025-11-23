@@ -46,6 +46,31 @@ async function importData() {
     let speakersInserted = 0;
     let collectionsInserted = 0;
     let lecturesInserted = 0;
+    let categoriesAssigned = 0;
+
+    // Cache category IDs by slug
+    const categoryCache = new Map();
+
+    async function getCategoryId(slug) {
+      if (!slug) return null;
+
+      if (categoryCache.has(slug)) {
+        return categoryCache.get(slug);
+      }
+
+      const result = await client.query(
+        `SELECT id FROM categories WHERE slug = $1`,
+        [slug]
+      );
+
+      if (result.rows.length > 0) {
+        categoryCache.set(slug, result.rows[0].id);
+        return result.rows[0].id;
+      }
+
+      console.log(`      ⚠️  Category not found: ${slug}`);
+      return null;
+    }
 
     for (const speakerData of manifest.speakers) {
       const speakerName = speakerData.name.trim();
@@ -105,6 +130,26 @@ async function importData() {
         collectionsInserted++;
         console.log(`    ✅ Collection ID: ${collectionId}`);
 
+        // Assign category to collection (and track for lectures)
+        const categorySlug = collectionData.categorySlug?.trim() || null;
+        let categoryId = null;
+
+        if (categorySlug) {
+          categoryId = await getCategoryId(categorySlug);
+
+          if (categoryId) {
+            // Insert into collection_categories (ignore if exists)
+            await client.query(
+              `INSERT INTO collection_categories (collection_id, category_id, is_primary, created_at)
+               VALUES ($1, $2, true, NOW())
+               ON CONFLICT (collection_id, category_id) DO NOTHING`,
+              [collectionId, categoryId]
+            );
+            console.log(`    🏷️  Category assigned: ${categorySlug}`);
+            categoriesAssigned++;
+          }
+        }
+
         // Process lectures
         for (const lectureData of collectionData.lectures || []) {
           const lectureTitle = lectureData.title?.trim();
@@ -133,18 +178,31 @@ async function importData() {
           }
 
           // Insert lecture (with speaker_id for proper relationship)
-          await client.query(
+          const lectureResult = await client.query(
             `INSERT INTO lectures (
               speaker_id, collection_id, title, description, lecture_number, file_name, file_path,
               duration, file_size, file_format, bitrate, sample_rate, file_hash,
               created_at, updated_at
              )
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
+             RETURNING id`,
             [
               speakerId, collectionId, lectureTitle, lectureDescription, lectureNumber, fileName, filePath,
               duration, fileSize, fileFormat, bitrate, sampleRate, fileHash
             ]
           );
+
+          const lectureId = lectureResult.rows[0].id;
+
+          // Cascade category from collection to lecture
+          if (categoryId) {
+            await client.query(
+              `INSERT INTO lecture_categories (lecture_id, category_id, is_primary, created_at)
+               VALUES ($1, $2, true, NOW())
+               ON CONFLICT (lecture_id, category_id) DO NOTHING`,
+              [lectureId, categoryId]
+            );
+          }
 
           lecturesInserted++;
           console.log(`      ✅ Lecture imported`);
@@ -159,6 +217,7 @@ async function importData() {
     console.log(`   Speakers:    ${speakersInserted}`);
     console.log(`   Collections: ${collectionsInserted}`);
     console.log(`   Lectures:    ${lecturesInserted}`);
+    console.log(`   Categories:  ${categoriesAssigned}`);
     console.log('='.repeat(50));
 
   } catch (error) {

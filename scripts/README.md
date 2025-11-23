@@ -1,103 +1,149 @@
-# R2 to PostgreSQL Migration Generator
+# Elmify Content Management Scripts
 
-Automatically generates SQL migration files from your Cloudflare R2 bucket.
+Scripts for managing content upload to Cloudflare R2 and database synchronization.
 
-## Prerequisites
+## Directory Structure
 
-1. **Cloudflare R2 API Credentials**
-   - Go to: https://dash.cloudflare.com/
-   - Navigate to: R2 → Manage R2 API Tokens
-   - Create a new API token with read permissions
-   - Note down:
-     - Account ID
-     - Access Key ID
-     - Secret Access Key
-
-2. **Node.js 18+** installed
+```
+scripts/
+├── r2-upload/          # Upload content to R2 storage
+├── db-import/          # Sync R2 metadata to PostgreSQL
+├── utilities/          # Helper scripts
+├── .env                # R2 credentials (copy from .env.example)
+├── package.json        # Node.js dependencies
+└── README.md
+```
 
 ## Setup
 
-1. Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Edit `.env` and fill in your R2 credentials:
-   ```env
-   R2_ACCOUNT_ID=your_account_id
-   R2_ACCESS_KEY_ID=your_access_key
-   R2_SECRET_ACCESS_KEY=your_secret_key
-   R2_BUCKET_NAME=elmify-audio
-   ```
-
-3. Install dependencies (already done):
-   ```bash
-   npm install
-   ```
-
-## Usage
-
-Run the script:
-
 ```bash
 cd scripts
-node generate-migration-from-r2.js
+cp .env.example .env
+# Edit .env with your R2 credentials
+npm install
 ```
 
-This will:
-1. Scan your R2 bucket (`elmify-audio`)
-2. Parse the folder structure (Speaker/Collection/Lectures)
-3. Read `collection.json` metadata files
-4. Generate SQL migration files in `src/main/resources/db/migration/`:
-   - `V16__clean_database_for_r2_import.sql` - Cleans existing data
-   - `V17__insert_speakers_from_r2.sql` - Inserts speakers
-   - `V18__insert_collections_from_r2.sql` - Inserts collections
-   - `V19__insert_lectures_from_r2_part1.sql` - Inserts lectures (can be multiple parts)
+## Workflows
 
-## Expected R2 Structure
+### 1. Upload New Content to R2
 
-```
-elmify-audio/
-├── Speaker Name 1/
-│   ├── Collection Name 1/
-│   │   ├── collection.json (optional metadata)
-│   │   ├── collection.jpg (optional cover image)
-│   │   ├── 01 - Lecture Title 1.mp3
-│   │   ├── 02 - Lecture Title 2.mp3
-│   │   └── ...
-│   └── Collection Name 2/
-│       └── ...
-└── Speaker Name 2/
-    └── ...
+```bash
+# Create speaker template
+./r2-upload/create_speaker.sh "Speaker Name" "Collection Name" ~/content
+
+# Add audio files, then validate
+./r2-upload/validate_content.sh ~/content
+
+# Fix any issues
+./r2-upload/fix_content.sh ~/content
+
+# Upload to R2
+./r2-upload/upload_to_r2.sh ~/content
 ```
 
-## After Generation
+### 2. Sync R2 to Database
 
-1. Review the generated files in `src/main/resources/db/migration/`
-2. Delete old migrations (V2-V15) if they conflict
-3. Build the project:
-   ```bash
-   cd ..
-   ./mvnw clean package -DskipTests
-   ```
-4. Commit and push to deploy:
-   ```bash
-   git add .
-   git commit -m "Regenerate database from R2"
-   git push
-   ```
+```bash
+# Generate manifest from R2
+node db-import/scan_r2_and_sync.js
 
-Railway will automatically deploy and run the new migrations!
+# Import to PostgreSQL
+DATABASE_URL="postgresql://..." node db-import/import_manifest.js r2_scanned_manifest.json
+```
 
-## Troubleshooting
+### 3. Unified Workflow (Recommended)
 
-**Error: Missing R2 credentials**
-- Make sure `.env` file exists and has all required variables
+```bash
+# Push: Upload to R2 + sync to database
+DATABASE_URL="postgresql://..." ./r2-upload/sync_metadata.sh push --dir ~/content
 
-**Error: Access denied**
-- Check your R2 API token has read permissions
-- Verify the bucket name is correct
+# Pull: Export database to manifest
+DATABASE_URL="postgresql://..." ./r2-upload/sync_metadata.sh pull
 
-**Error: No objects found**
-- Verify your bucket name in `.env`
-- Check that files exist in R2
+# Status: Check current state
+./r2-upload/sync_metadata.sh status
+```
+
+## Scripts Reference
+
+### r2-upload/
+
+| Script | Description |
+|--------|-------------|
+| `upload_to_r2.sh` | Upload content directory to R2 |
+| `create_speaker.sh` | Create speaker/collection template |
+| `validate_content.sh` | Validate directory structure |
+| `fix_content.sh` | Auto-fix common issues |
+| `clear_r2_storage.sh` | Clear R2 bucket |
+| `generate_small_images.sh` | Generate thumbnail images |
+| `sync_metadata.sh` | Unified push/pull/scan workflow |
+
+### db-import/
+
+| Script | Description |
+|--------|-------------|
+| `import_manifest.js` | Import manifest JSON to PostgreSQL |
+| `scan_r2_and_sync.js` | Scan R2 bucket → generate manifest |
+| `scan_legacy_r2_structure.js` | Scan legacy R2 structure |
+| `generate_manifest.js` | Generate manifest from local files |
+| `generate-migration-from-r2.js` | Generate SQL migrations from R2 |
+| `export_from_db.js` | Export database to manifest |
+| `download_from_r2.js` | Download files from R2 |
+| `import_build_R2_manifest_json.js` | Build manifest from R2 |
+| `fix_missing_speaker_ids.js` | Fix data issues |
+
+### utilities/
+
+| Script | Description |
+|--------|-------------|
+| `rename_quran_surahs.js` | Rename Quran surah files |
+| `convert_existing_structure.sh` | Convert old structure to new |
+
+## Expected Content Structure
+
+```
+content/
+├── Speaker Name/
+│   ├── speaker.json          # Speaker metadata
+│   ├── speaker.jpg           # Speaker image
+│   ├── speaker_small.jpg     # Speaker thumbnail
+│   └── Collection Name/
+│       ├── collection.json   # Collection metadata
+│       ├── collection.jpg    # Cover image
+│       ├── collection_small.jpg
+│       ├── 01 - Lecture Title.mp3
+│       └── 02 - Another Lecture.mp3
+```
+
+### collection.json format
+
+```json
+{
+  "title": "Collection Title",
+  "description": "Description of the collection",
+  "year": 2023,
+  "cover": "collection.jpg",
+  "coverSmall": "collection_small.jpg",
+  "categorySlug": "spirituality"
+}
+```
+
+## Environment Variables
+
+```env
+R2_ENDPOINT=https://xxx.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID=your_access_key
+R2_SECRET_ACCESS_KEY=your_secret_key
+R2_BUCKET_NAME=elmify-audio
+```
+
+## Dependencies
+
+```bash
+# Node.js packages (handled by npm install)
+npm install
+
+# System tools
+brew install ffmpeg imagemagick jq
+npm install -g wrangler
+```

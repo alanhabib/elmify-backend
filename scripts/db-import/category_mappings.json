@@ -1,0 +1,43 @@
+{
+  "_instructions": "Map speakers/collections to category slugs. Run with --list-categories to see valid slugs.",
+  "_validSlugs": [
+    "akhlaq",
+    "contemporary",
+    "dhikr",
+    "family",
+    "family-law",
+    "fiqh",
+    "ibadah",
+    "islamic-civilization",
+    "islamic-history",
+    "knowledge",
+    "marriage",
+    "muamalat",
+    "parenting",
+    "personal-development",
+    "quran-recitation",
+    "quran-tafsir",
+    "sahaba",
+    "seerah",
+    "spirituality",
+    "tafsir-studies",
+    "tajweed",
+    "tazkiyah",
+    "youth"
+  ],
+  "speakerDefaults": {},
+  "collectionOverrides": {
+    "Abdulrahman Hassan/Seerah of Prophet Muhammad ﷺ": "seerah",
+    "Abdul Rashid Sufi/Quran Hafs": "quran-recitation",
+    "Ahmad Jibril/Legends Islam": "islamic-history",
+    "Anwar Awlaki/Lives Of The Prophets": "seerah",
+    "Anwar Awlaki/The Hereafter": "spirituality",
+    "Anwar Awlaki/The Life of Muhammad ﷺ (Makkan Period)": "seerah",
+    "Anwar Awlaki/The Life of Muhammad ﷺ (Medina Period I)": "seerah",
+    "Anwar Awlaki/The Life of Muhammed ﷺ - Madinah Part II": "seerah",
+    "Badr al-Turki/Quran Hafs": "quran-recitation",
+    "Bilal Assad/Those Who Desire Paradise": "spirituality",
+    "Feiz Muhammad/Etiquettes Of Hijab": "akhlaq",
+    "Maher al-Muaiqly/Quran Hafs": "quran-recitation"
+  }
+}
