@@ -2,6 +2,7 @@ package com.elmify.backend.controller;
 
 import com.elmify.backend.dto.CategoryDetailDto;
 import com.elmify.backend.dto.CategoryDto;
+import com.elmify.backend.dto.CollectionDto;
 import com.elmify.backend.dto.LectureDto;
 import com.elmify.backend.dto.PagedResponse;
 import com.elmify.backend.entity.Category;
@@ -100,6 +101,26 @@ public class CategoryController {
                 .toList();
 
         return ResponseEntity.ok(categoryDtos);
+    }
+
+    @GetMapping("/{slug}/collections")
+    @Operation(summary = "Get Collections by Category (Paginated)",
+            description = "Retrieves paginated collections in a category. Public endpoint.")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved collections")
+    @ApiResponse(responseCode = "404", description = "Category not found")
+    public ResponseEntity<PagedResponse<CollectionDto>> getCollectionsByCategory(
+            @Parameter(description = "Category slug", example = "quran")
+            @PathVariable String slug,
+            Pageable pageable) {
+        // Verify category exists
+        categoryService.getCategoryBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "slug", slug));
+
+        Page<CollectionDto> collectionDtos = categoryService.getCollectionsByCategory(slug, pageable)
+                .map(collection -> CollectionDto.fromEntity(collection, storageService));
+
+        PagedResponse<CollectionDto> response = PagedResponse.from(collectionDtos);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{slug}/lectures")
