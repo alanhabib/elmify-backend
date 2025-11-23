@@ -18,6 +18,7 @@ import java.util.Set;
 @EntityListeners(AuditingEntityListener.class)
 @Data
 @NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Category {
 
     @Id
