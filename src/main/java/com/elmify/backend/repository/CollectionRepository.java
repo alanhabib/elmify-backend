@@ -58,7 +58,7 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
 
     /**
      * Find collections by category slug with speaker eagerly loaded.
-     * Used for featured collections in category detail view.
+     * Returns all collections (for premium users).
      *
      * @param categorySlug The category slug.
      * @param pageable Pagination information.
@@ -72,4 +72,24 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
                     "JOIN c.collectionCategories cc " +
                     "WHERE cc.category.slug = :categorySlug")
     Page<Collection> findByCategorySlug(@Param("categorySlug") String categorySlug, Pageable pageable);
+
+    /**
+     * Find collections by category slug, excluding premium speakers' content.
+     * Used for non-premium users.
+     *
+     * @param categorySlug The category slug.
+     * @param pageable Pagination information.
+     * @return A Page of Collection entities in the category (free only).
+     */
+    @Query(value = "SELECT DISTINCT c FROM Collection c " +
+            "LEFT JOIN FETCH c.speaker s " +
+            "JOIN c.collectionCategories cc " +
+            "WHERE cc.category.slug = :categorySlug " +
+            "AND s.isPremium = false",
+            countQuery = "SELECT COUNT(DISTINCT c) FROM Collection c " +
+                    "JOIN c.collectionCategories cc " +
+                    "JOIN c.speaker s " +
+                    "WHERE cc.category.slug = :categorySlug " +
+                    "AND s.isPremium = false")
+    Page<Collection> findByCategorySlugFreeOnly(@Param("categorySlug") String categorySlug, Pageable pageable);
 }

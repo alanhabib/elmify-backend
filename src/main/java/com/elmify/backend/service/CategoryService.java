@@ -91,27 +91,45 @@ public class CategoryService {
 
     /**
      * Retrieves paginated collections for a category.
-     * Used for featured collections in category detail view.
+     * Filters out premium speakers' collections for non-premium users.
      *
      * @param categorySlug The category slug.
      * @param pageable Pagination information.
      * @return A Page of Collection entities.
      */
     public Page<Collection> getCollectionsByCategory(String categorySlug, Pageable pageable) {
-        return collectionRepository.findByCategorySlug(categorySlug, pageable);
+        boolean isPremiumUser = premiumFilterService.isCurrentUserPremium();
+
+        if (isPremiumUser) {
+            return collectionRepository.findByCategorySlug(categorySlug, pageable);
+        } else {
+            return collectionRepository.findByCategorySlugFreeOnly(categorySlug, pageable);
+        }
     }
 
     /**
      * Retrieves featured collections for a category (limited to top 5).
+     * Filters out premium speakers' collections for non-premium users.
      *
      * @param categorySlug The category slug.
      * @return List of top Collection entities in the category.
      */
     public List<Collection> getFeaturedCollectionsForCategory(String categorySlug) {
-        Page<Collection> collections = collectionRepository.findByCategorySlug(
-                categorySlug,
-                PageRequest.of(0, 5)
-        );
+        boolean isPremiumUser = premiumFilterService.isCurrentUserPremium();
+        Page<Collection> collections;
+
+        if (isPremiumUser) {
+            collections = collectionRepository.findByCategorySlug(
+                    categorySlug,
+                    PageRequest.of(0, 5)
+            );
+        } else {
+            collections = collectionRepository.findByCategorySlugFreeOnly(
+                    categorySlug,
+                    PageRequest.of(0, 5)
+            );
+        }
+
         return collections.getContent();
     }
 }
