@@ -2,6 +2,8 @@ package com.elmify.backend.repository;
 
 import com.elmify.backend.entity.Collection;
 import com.elmify.backend.entity.Speaker;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -53,4 +55,21 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
     
     @Query("SELECT c FROM Collection c JOIN FETCH c.speaker WHERE c.id = :id")
     Optional<Collection> findByIdWithSpeaker(@Param("id") Long id);
+
+    /**
+     * Find collections by category slug with speaker eagerly loaded.
+     * Used for featured collections in category detail view.
+     *
+     * @param categorySlug The category slug.
+     * @param pageable Pagination information.
+     * @return A Page of Collection entities in the category.
+     */
+    @Query(value = "SELECT DISTINCT c FROM Collection c " +
+            "LEFT JOIN FETCH c.speaker " +
+            "JOIN c.collectionCategories cc " +
+            "WHERE cc.category.slug = :categorySlug",
+            countQuery = "SELECT COUNT(DISTINCT c) FROM Collection c " +
+                    "JOIN c.collectionCategories cc " +
+                    "WHERE cc.category.slug = :categorySlug")
+    Page<Collection> findByCategorySlug(@Param("categorySlug") String categorySlug, Pageable pageable);
 }

@@ -133,6 +133,48 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     void incrementPlayCount(@Param("lectureId") Long lectureId, @Param("timestamp") LocalDateTime timestamp);
 
 
+    // --- Category-based Methods ---
+
+    /**
+     * Find lectures by category slug with eagerly loaded speaker and collection.
+     * Includes lectures from premium and non-premium speakers.
+     *
+     * @param categorySlug The category slug.
+     * @param pageable Pagination information.
+     * @return A Page of Lecture entities in the category.
+     */
+    @Query(value = "SELECT DISTINCT l FROM Lecture l " +
+            "LEFT JOIN FETCH l.speaker " +
+            "LEFT JOIN FETCH l.collection " +
+            "JOIN l.lectureCategories lc " +
+            "WHERE lc.category.slug = :categorySlug " +
+            "ORDER BY l.playCount DESC",
+            countQuery = "SELECT COUNT(DISTINCT l) FROM Lecture l " +
+                    "JOIN l.lectureCategories lc " +
+                    "WHERE lc.category.slug = :categorySlug")
+    Page<Lecture> findByCategorySlug(@Param("categorySlug") String categorySlug, Pageable pageable);
+
+    /**
+     * Find lectures by category slug, excluding premium speakers.
+     *
+     * @param categorySlug The category slug.
+     * @param pageable Pagination information.
+     * @return A Page of free Lecture entities in the category.
+     */
+    @Query(value = "SELECT DISTINCT l FROM Lecture l " +
+            "LEFT JOIN FETCH l.speaker " +
+            "LEFT JOIN FETCH l.collection " +
+            "JOIN l.lectureCategories lc " +
+            "WHERE lc.category.slug = :categorySlug " +
+            "AND (l.speaker.isPremium = false OR l.speaker.isPremium IS NULL) " +
+            "ORDER BY l.playCount DESC",
+            countQuery = "SELECT COUNT(DISTINCT l) FROM Lecture l " +
+                    "JOIN l.lectureCategories lc " +
+                    "WHERE lc.category.slug = :categorySlug " +
+                    "AND (l.speaker.isPremium = false OR l.speaker.isPremium IS NULL)")
+    Page<Lecture> findByCategorySlugFreeOnly(@Param("categorySlug") String categorySlug, Pageable pageable);
+
+
     // --- Obsolete/Removed Methods ---
     // - All methods returning List<Lecture> have been replaced with paginated versions.
     // - All queries referencing the old text fields `l.speaker` or `l.collection` have been removed.

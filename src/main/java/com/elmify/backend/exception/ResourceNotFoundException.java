@@ -13,6 +13,10 @@ public class ResourceNotFoundException extends RuntimeException {
         super(String.format("%s not found with identifier: %s", resourceType, identifier));
     }
 
+    public ResourceNotFoundException(String resourceType, String fieldName, Object fieldValue) {
+        super(String.format("%s not found with %s: %s", resourceType, fieldName, fieldValue));
+    }
+
     public ResourceNotFoundException(String message, Throwable cause) {
         super(message, cause);
     }
