@@ -68,7 +68,7 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
             "LEFT JOIN FETCH c.speaker " +
             "JOIN c.collectionCategories cc " +
             "WHERE cc.category.slug = :categorySlug " +
-            "ORDER BY SIZE(c.lectures) DESC",
+            "ORDER BY c.lectureCount DESC",
             countQuery = "SELECT COUNT(DISTINCT c) FROM Collection c " +
                     "JOIN c.collectionCategories cc " +
                     "WHERE cc.category.slug = :categorySlug")
