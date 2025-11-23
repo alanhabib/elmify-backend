@@ -39,7 +39,6 @@ CREATE TABLE collection_categories (
 
 -- Indexes for performance
 CREATE INDEX idx_categories_parent ON categories(parent_id);
-CREATE INDEX idx_categories_slug ON categories(slug);
 CREATE INDEX idx_categories_featured ON categories(is_featured) WHERE is_featured = true;
 CREATE INDEX idx_categories_active ON categories(is_active) WHERE is_active = true;
 CREATE INDEX idx_categories_display_order ON categories(display_order);
