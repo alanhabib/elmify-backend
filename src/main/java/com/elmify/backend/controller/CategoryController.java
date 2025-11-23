@@ -65,7 +65,7 @@ public class CategoryController {
     @ApiResponse(responseCode = "200", description = "Successfully retrieved category")
     @ApiResponse(responseCode = "404", description = "Category not found")
     public ResponseEntity<CategoryDetailDto> getCategoryBySlug(
-            @Parameter(description = "Category slug", example = "quran")
+            @Parameter(description = "Category slug", example = "quran-tafsir")
             @PathVariable String slug) {
         Category category = categoryService.getCategoryBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "slug", slug));
