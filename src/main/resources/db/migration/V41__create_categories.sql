@@ -44,7 +44,6 @@ CREATE INDEX idx_categories_featured ON categories(is_featured) WHERE is_feature
 CREATE INDEX idx_categories_active ON categories(is_active) WHERE is_active = true;
 CREATE INDEX idx_categories_display_order ON categories(display_order);
 CREATE INDEX idx_lecture_categories_category ON lecture_categories(category_id);
-CREATE INDEX idx_lecture_categories_primary ON lecture_categories(is_primary) WHERE is_primary = true;
 CREATE INDEX idx_collection_categories_category ON collection_categories(category_id);
 
 -- Trigger function to update lecture_count
