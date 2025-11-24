@@ -18,4 +18,7 @@ COPY --from=builder /app/target/elmify-backend-1.0.0.jar app.jar
 
 EXPOSE 8080
 
-CMD ["java", "-Xmx512m", "-Xms256m", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
+# Use Railway's PORT environment variable, default to 8080
+ENV PORT=8080
+
+CMD ["java", "-Xmx400m", "-Xms200m", "-XX:+UseContainerSupport", "-Djava.security.egd=file:/dev/./urandom", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
