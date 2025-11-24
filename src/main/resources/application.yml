@@ -89,6 +89,32 @@ elmify:
     allowed-methods: GET,POST,PUT,DELETE,OPTIONS
     allowed-headers: "*"
     max-age: 3600
-  
+
   security:
     admin-emails: ${ADMIN_EMAILS:dalanhabib@gmail.com}
+
+  # Redis Configuration for Playlist Manifest Caching
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 2000ms
+    ssl:
+      enabled: ${REDIS_SSL:false}
+
+# Spring Data Redis
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      ssl:
+        enabled: ${REDIS_SSL:false}
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: 2000ms
