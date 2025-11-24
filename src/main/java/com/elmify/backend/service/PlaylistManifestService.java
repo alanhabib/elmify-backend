@@ -189,7 +189,7 @@ public class PlaylistManifestService {
                 .lectureId(lecture.getId().toString())
                 .audioUrl(signedUrl)
                 .expiresAt(expiresAt)
-                .duration(lecture.getDuration())
+                .duration(lecture.getDuration() != null ? lecture.getDuration().longValue() : null)
                 .build();
 
         } catch (Exception e) {
