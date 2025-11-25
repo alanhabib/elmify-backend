@@ -102,19 +102,19 @@ elmify:
     ssl:
       enabled: ${REDIS_SSL:false}
 
-# Spring Data Redis
-spring:
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      timeout: 2000ms
-      ssl:
-        enabled: ${REDIS_SSL:false}
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 2
-          max-wait: 2000ms
+# Spring Data Redis (commented out - will only be enabled in prod profile if REDIS_HOST is set)
+# spring:
+#   data:
+#     redis:
+#       host: ${REDIS_HOST}
+#       port: ${REDIS_PORT:6379}
+#       password: ${REDIS_PASSWORD:}
+#       timeout: 2000ms
+#       ssl:
+#         enabled: ${REDIS_SSL:false}
+#       lettuce:
+#         pool:
+#           max-active: 8
+#           max-idle: 8
+#           min-idle: 2
+#           max-wait: 2000ms

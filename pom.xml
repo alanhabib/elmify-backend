@@ -127,7 +127,9 @@
             <version>7.6.0</version>
         </dependency>
 
-        <!-- Redis for Playlist Caching -->
+        <!-- Redis for Playlist Caching - DISABLED until Redis is added to Railway -->
+        <!-- Uncomment these when you add Redis: railway add redis -->
+        <!--
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
@@ -137,6 +139,7 @@
             <groupId>io.lettuce</groupId>
             <artifactId>lettuce-core</artifactId>
         </dependency>
+        -->
 
         <!-- Logging -->
         <dependency>

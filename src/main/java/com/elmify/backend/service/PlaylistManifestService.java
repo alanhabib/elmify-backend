@@ -7,8 +7,6 @@ import com.elmify.backend.dto.TrackManifest;
 import com.elmify.backend.entity.Lecture;
 import com.elmify.backend.repository.LectureRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -33,22 +31,16 @@ public class PlaylistManifestService {
 
     private final LectureRepository lectureRepository;
     private final StorageService storageService;
-    private final RedisTemplate<String, PlaylistManifestResponse> redisTemplate;
 
-    // Constructor with optional Redis
+    // Constructor without Redis (Redis support temporarily disabled)
     public PlaylistManifestService(
             LectureRepository lectureRepository,
-            StorageService storageService,
-            @Autowired(required = false) RedisTemplate<String, PlaylistManifestResponse> redisTemplate) {
+            StorageService storageService) {
         this.lectureRepository = lectureRepository;
         this.storageService = storageService;
-        this.redisTemplate = redisTemplate;
 
-        if (redisTemplate == null) {
-            log.warn("⚠️ Redis not configured - Playlist manifest caching is DISABLED. Performance will be degraded.");
-        } else {
-            log.info("✅ Redis caching enabled for playlist manifests");
-        }
+        log.info("⚠️ Playlist manifest service initialized WITHOUT Redis caching");
+        log.info("💡 To enable Redis caching: uncomment Redis dependencies in pom.xml and redeploy");
     }
 
     // Virtual thread executor for parallel URL signing (Java 21+)
@@ -72,27 +64,12 @@ public class PlaylistManifestService {
                  request.getCollectionId(), request.getPlaylistType(),
                  request.getLectureIds().size(), userId);
 
-        // Generate cache key
+        // Generate playlist identifier
         String playlistId = request.getCollectionId() != null
             ? request.getCollectionId()
             : request.getPlaylistType();
-        String cacheKey = generateCacheKey(playlistId, userId);
 
-        // Try to get from cache (only if Redis is available)
-        if (redisTemplate != null) {
-            try {
-                PlaylistManifestResponse cached = redisTemplate.opsForValue().get(cacheKey);
-                if (cached != null && isManifestValid(cached)) {
-                    log.info("✅ Cache HIT for playlist: {}", playlistId);
-                    cached.getMetadata().setCached(true);
-                    return cached;
-                }
-            } catch (Exception e) {
-                log.warn("⚠️ Redis cache read failed, continuing without cache: {}", e.getMessage());
-            }
-        }
-
-        log.info("🔄 Cache MISS for playlist: {} - Generating new manifest", playlistId);
+        log.info("🔄 Generating new manifest for playlist: {} (Redis caching disabled)", playlistId);
 
         // Fetch lectures from database
         List<Lecture> lectures = lectureRepository.findAllById(
@@ -119,16 +96,6 @@ public class PlaylistManifestService {
                 .map(id -> lectureMap.get(Long.parseLong(id)))
                 .collect(Collectors.toList())
         );
-
-        // Cache the result (only if Redis is available)
-        if (redisTemplate != null) {
-            try {
-                redisTemplate.opsForValue().set(cacheKey, manifest, CACHE_TTL);
-                log.info("💾 Cached manifest for playlist: {} (TTL: {} minutes)", playlistId, CACHE_TTL.toMinutes());
-            } catch (Exception e) {
-                log.warn("⚠️ Redis cache write failed, continuing without cache: {}", e.getMessage());
-            }
-        }
 
         manifest.getMetadata().setCached(false);
         return manifest;
@@ -198,47 +165,4 @@ public class PlaylistManifestService {
         }
     }
 
-    /**
-     * Generate Redis cache key
-     */
-    private String generateCacheKey(String playlistId, String userId) {
-        // Include userId for user-specific playlists (favorites, history)
-        // For public collections, userId can be null
-        return String.format("playlist:manifest:%s:%s", playlistId, userId != null ? userId : "public");
-    }
-
-    /**
-     * Check if cached manifest is still valid
-     */
-    private boolean isManifestValid(PlaylistManifestResponse manifest) {
-        if (manifest == null || manifest.getMetadata() == null) {
-            return false;
-        }
-
-        // Check if URLs are still valid (with 5-minute safety buffer)
-        Instant expiryThreshold = Instant.now().plus(5, ChronoUnit.MINUTES);
-        return manifest.getMetadata().getExpiresAt().isAfter(expiryThreshold);
-    }
-
-    /**
-     * Clear cache for a specific collection or all
-     */
-    public void clearCache(String collectionId) {
-        if (redisTemplate == null) {
-            log.warn("⚠️ Redis not available - cache clear skipped");
-            return;
-        }
-
-        try {
-            if (collectionId != null) {
-                redisTemplate.delete("playlist:manifest:" + collectionId + ":*");
-                log.info("🗑️ Cleared cache for collection {}", collectionId);
-            } else {
-                redisTemplate.delete("playlist:manifest:*");
-                log.info("🗑️ Cleared all playlist manifest cache");
-            }
-        } catch (Exception e) {
-            log.error("❌ Failed to clear cache: {}", e.getMessage());
-        }
-    }
 }
