@@ -127,25 +127,6 @@ public class PlaylistManifestController {
     }
 
     /**
-     * Clear playlist cache (admin only)
-     */
-    @DeleteMapping("/manifest/cache")
-    @Operation(
-        summary = "Clear playlist manifest cache",
-        description = "Clear Redis cache for playlist manifests. Optionally specify collectionId to clear only that collection."
-    )
-    public ResponseEntity<Void> clearCache(
-            @RequestParam(required = false) String collectionId,
-            @AuthenticationPrincipal Jwt jwt) {
-
-        // Only admins can clear cache
-        // TODO: Add admin role check
-
-        playlistManifestService.clearCache(collectionId);
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
      * Get or create rate limiting bucket for user
      */
     private Bucket getBucket(String userId) {
