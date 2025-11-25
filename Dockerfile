@@ -10,11 +10,13 @@ COPY src ./src
 RUN mvn clean install -DskipTests
 
 
-# Stage 2 
+# Stage 2
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 COPY --from=builder /app/target/elmify-backend-1.0.0.jar app.jar
+COPY startup-debug.sh .
+RUN chmod +x startup-debug.sh
 
 EXPOSE 8080
 

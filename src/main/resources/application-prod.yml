@@ -36,6 +36,8 @@ spring:
     clean-disabled: true
     validate-on-migrate: false
     ignore-missing-migrations: true
+    baseline-on-migrate: true
+    baseline-version: 0
 
   lifecycle:
     timeout-per-shutdown-phase: 20s
@@ -60,12 +62,14 @@ server:
 # Production logging
 logging:
   level:
-    root: WARN
+    root: INFO
     com.elmify: INFO
-    org.springframework.security: WARN
+    org.springframework.security: INFO
     org.springframework.boot.web.embedded.tomcat: INFO
     org.springframework.web: INFO
     org.flywaydb: INFO
+    org.springframework.boot: INFO
+    org.springframework.context: INFO
   pattern:
     console: "%d{ISO8601} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
   file:
