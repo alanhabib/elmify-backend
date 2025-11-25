@@ -25,6 +25,10 @@ import java.util.Set;
 @Table(name = "collections",
         uniqueConstraints = @UniqueConstraint(columnNames = {"speaker_id", "title"}))
 @EntityListeners(AuditingEntityListener.class)
+@NamedEntityGraph(
+        name = "Collection.withSpeaker",
+        attributeNodes = @NamedAttributeNode("speaker")
+)
 @Data
 @NoArgsConstructor
 public class Collection {
