@@ -18,7 +18,7 @@ COPY --from=builder /app/target/elmify-backend-1.0.0.jar app.jar
 
 # Railway will dynamically assign the PORT environment variable
 # Don't hardcode it here - let Railway set it
-EXPOSE ${PORT:-8080}
+EXPOSE 8080
 
 # Start the application
 # The PORT environment variable is passed to Spring Boot via the -Dserver.port system property in the ENTRYPOINT
