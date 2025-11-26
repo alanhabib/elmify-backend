@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * - Efficient batch processing
  */
 @RestController
-@RequestMapping("/api/playlists")
+@RequestMapping("/api/v1/playlists")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Playlists", description = "Playlist manifest operations")
