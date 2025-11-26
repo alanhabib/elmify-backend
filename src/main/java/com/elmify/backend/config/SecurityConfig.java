@@ -106,6 +106,10 @@ public class SecurityConfig {
                   .permitAll();
 
               auth
+                  // ===== PUBLIC POST ENDPOINTS =====
+                  // Playlist manifest endpoint is public (for guest access)
+                  .requestMatchers(HttpMethod.POST, "/api/v1/playlists/manifest")
+                  .permitAll()
                   // ===== AUTHENTICATED ENDPOINTS =====
                   // Playback tracking requires authentication
                   .requestMatchers("/api/v1/playback/**")
@@ -116,7 +120,7 @@ public class SecurityConfig {
                   // Favorites require authentication
                   .requestMatchers("/api/v1/favorites/**")
                   .authenticated()
-                  // All POST/PUT/PATCH/DELETE operations require authentication
+                  // All OTHER POST/PUT/PATCH/DELETE operations require authentication
                   .requestMatchers(HttpMethod.POST, "/api/v1/**")
                   .authenticated()
                   .requestMatchers(HttpMethod.PUT, "/api/v1/**")
