@@ -192,7 +192,7 @@ public class SecurityConfig {
     boolean isWildcard = origins.contains("*") || allowedOriginsConfig.equals("*");
 
     if (isWildcard) {
-      log.warn("CORS: Allowing ALL origins (*) - React Native app (CORS not enforced by native apps)");
+      log.info("CORS: Allowing ALL origins (*) - React Native app (CORS not enforced by native apps)");
       configuration.setAllowedOriginPatterns(List.of("*"));
       configuration.setAllowCredentials(false);
     } else {
