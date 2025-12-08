@@ -2,6 +2,7 @@ package com.elmify.backend.config; // Assuming it stays in the 'config' package
 
 import com.elmify.backend.security.ClerkJwtAuthenticationConverter;
 import com.elmify.backend.security.ClerkJwtDecoder;
+import com.elmify.backend.security.JwtUserSyncFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -36,6 +38,7 @@ public class SecurityConfig {
 
   private final ClerkJwtDecoder clerkJwtDecoder;
   private final ClerkJwtAuthenticationConverter clerkJwtAuthenticationConverter;
+  private final JwtUserSyncFilter jwtUserSyncFilter;
 
   @Value("${elmify.cors.allowed-origins}")
   private String allowedOriginsConfig;
@@ -172,7 +175,9 @@ public class SecurityConfig {
                           .getWriter()
                           .write(
                               "{\"error\":\"Access denied\",\"message\":\"Insufficient privileges to access this resource\"}");
-                    }));
+                    }))
+        // Add filter to auto-sync users from JWT claims after authentication
+        .addFilterAfter(jwtUserSyncFilter, BearerTokenAuthenticationFilter.class);
 
     return http.build();
   }
@@ -192,7 +197,8 @@ public class SecurityConfig {
     boolean isWildcard = origins.contains("*") || allowedOriginsConfig.equals("*");
 
     if (isWildcard) {
-      log.info("CORS: Allowing ALL origins (*) - React Native app (CORS not enforced by native apps)");
+      log.info(
+          "CORS: Allowing ALL origins (*) - React Native app (CORS not enforced by native apps)");
       configuration.setAllowedOriginPatterns(List.of("*"));
       configuration.setAllowCredentials(false);
     } else {
