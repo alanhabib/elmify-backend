@@ -9,6 +9,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
@@ -54,7 +55,11 @@ public class StorageService {
                 .endpointOverride(URI.create(endpoint))
                 .credentialsProvider(credentialsProvider)
                 .region(Region.of(region))
-                .serviceConfiguration(config -> config.pathStyleAccessEnabled(true))
+                .serviceConfiguration(
+                    S3Configuration.builder()
+                        .pathStyleAccessEnabled(true)
+                        .build()
+                )
                 .build();
 
         logger.info("Storage service initialized with endpoint: {}, bucket: {}", endpoint, bucketName);
