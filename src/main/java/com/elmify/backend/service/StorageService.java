@@ -54,6 +54,7 @@ public class StorageService {
                 .endpointOverride(URI.create(endpoint))
                 .credentialsProvider(credentialsProvider)
                 .region(Region.of(region))
+                .serviceConfiguration(config -> config.pathStyleAccessEnabled(true))
                 .build();
 
         logger.info("Storage service initialized with endpoint: {}, bucket: {}", endpoint, bucketName);
