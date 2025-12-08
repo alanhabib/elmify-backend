@@ -94,9 +94,6 @@ public class SecurityConfig {
               }
 
               auth
-                  // Public user sync endpoint (called during authentication)
-                  .requestMatchers("/api/v1/users/sync")
-                  .permitAll()
                   // ===== PUBLIC GET ENDPOINTS (for browsing/streaming) =====
                   .requestMatchers(HttpMethod.GET, "/api/v1/speakers/**")
                   .permitAll()
