@@ -59,17 +59,18 @@ public class SpeakerService {
      */
     @Transactional(readOnly = true)
     public Page<SpeakerDto> getAllSpeakers(Pageable pageable) {
+        Page<Speaker> speakers = speakerRepository.findAll(pageable);
+
         // Check if current user is premium
         boolean userIsPremium = isCurrentUserPremium();
 
-        // Query speakers based on premium status
-        Page<Speaker> speakers;
-        if (userIsPremium) {
-            // Premium users see all speakers (including premium ones)
-            speakers = speakerRepository.findAll(pageable);
-        } else {
-            // Non-premium users only see non-premium speakers
-            speakers = speakerRepository.findByIsPremiumFalseOrIsPremiumIsNull(pageable);
+        // If user is NOT premium, filter out premium speakers
+        if (!userIsPremium) {
+            List<Speaker> filteredSpeakers = speakers.getContent().stream()
+                    .filter(speaker -> speaker.getIsPremium() == null || !speaker.getIsPremium())
+                    .collect(Collectors.toList());
+
+            speakers = new PageImpl<>(filteredSpeakers, pageable, filteredSpeakers.size());
         }
 
         return speakers.map(speaker -> SpeakerDto.fromEntity(speaker, storageService));
