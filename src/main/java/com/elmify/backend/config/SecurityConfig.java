@@ -185,15 +185,11 @@ public class SecurityConfig {
     // Parse comma-separated origins from environment variable
     List<String> origins = Arrays.asList(allowedOriginsConfig.split(","));
 
-    // Check if using wildcard (development only)
+    // Check if using wildcard
     boolean isWildcard = origins.contains("*") || allowedOriginsConfig.equals("*");
 
     if (isWildcard) {
-      if (!"dev".equals(activeProfile)) {
-        log.error("CORS wildcard (*) is not allowed in production! Configure specific origins.");
-        throw new IllegalStateException("CORS wildcard not allowed in production");
-      }
-      log.warn("CORS: Allowing ALL origins (*) - development only");
+      log.warn("CORS: Allowing ALL origins (*) - React Native app (CORS not enforced by native apps)");
       configuration.setAllowedOriginPatterns(List.of("*"));
       configuration.setAllowCredentials(false);
     } else {
