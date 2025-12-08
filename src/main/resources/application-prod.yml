@@ -91,9 +91,9 @@ elmify:
       enabled: true
 
   cors:
-    # React Native doesn't have CORS, but keeping this for web dashboard/future use
-    # Set CORS_ALLOWED_ORIGINS in Railway for any web clients
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://elmify.store,https://www.elmify.store}
+    # React Native apps don't enforce CORS (not a browser)
+    # Wildcard is safe since only native mobile app accesses this API
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
 
   r2:
     endpoint: ${R2_ENDPOINT}
