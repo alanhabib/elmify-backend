@@ -68,6 +68,9 @@ public class StorageService {
     /**
      * Generate a presigned URL for streaming audio files
      * Optimized for network streaming with range request support
+     *
+     * IMPORTANT: Cloudflare R2 requires path-style URLs
+     * AWS SDK generates subdomain-style, so we manually convert to path-style
      */
     public String generatePresignedUrl(String objectKey) {
         try {
@@ -88,11 +91,47 @@ public class StorageService {
             PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
             String url = presignedRequest.url().toString();
 
+            // Convert subdomain-style to path-style for R2 compatibility
+            // From: https://elmify-audio.b995be98e08909685abfca00c971e79e.r2.cloudflarestorage.com/object?params
+            // To:   https://b995be98e08909685abfca00c971e79e.r2.cloudflarestorage.com/elmify-audio/object?params
+            url = convertToPathStyle(url);
+
             logger.debug("Generated presigned URL for key: {} (expires in {})", objectKey, presignedUrlExpiration);
             return url;
         } catch (Exception e) {
             logger.error("Failed to generate presigned URL for key: {}", objectKey, e);
             throw new RuntimeException("Failed to generate presigned URL", e);
+        }
+    }
+
+    /**
+     * Convert AWS SDK subdomain-style URLs to path-style URLs for R2
+     * R2 only accepts path-style: https://endpoint/bucket/key
+     */
+    private String convertToPathStyle(String subdomainUrl) {
+        try {
+            // Pattern: https://{bucket}.{accountId}.r2.cloudflarestorage.com/{key}?{params}
+            // Target:  https://{accountId}.r2.cloudflarestorage.com/{bucket}/{key}?{params}
+
+            if (subdomainUrl.contains(bucketName + ".") && subdomainUrl.contains(".r2.cloudflarestorage.com")) {
+                // Extract bucket from subdomain
+                String withoutBucket = subdomainUrl.replace(bucketName + ".", "");
+
+                // Find where the path starts (after .com/)
+                int pathStart = withoutBucket.indexOf(".com/") + 5; // 5 = length of ".com/"
+
+                // Insert bucket name at the start of the path
+                String pathStyleUrl = withoutBucket.substring(0, pathStart) + bucketName + "/" + withoutBucket.substring(pathStart);
+
+                logger.debug("Converted subdomain-style URL to path-style: {} -> {}", subdomainUrl, pathStyleUrl);
+                return pathStyleUrl;
+            }
+
+            // If already path-style or unknown format, return as-is
+            return subdomainUrl;
+        } catch (Exception e) {
+            logger.warn("Failed to convert URL to path-style, using as-is: {}", subdomainUrl, e);
+            return subdomainUrl;
         }
     }
 
