@@ -186,6 +186,9 @@ public class SecurityConfig {
     List<String> origins = Arrays.asList(allowedOriginsConfig.split(","));
 
     // Check if using wildcard
+    // NOTE: Wildcard CORS (*) is configured for React Native mobile app.
+    // React Native apps don't enforce CORS (not browser-based), so wildcard is safe.
+    // If web clients are added in the future, configure specific origins instead.
     boolean isWildcard = origins.contains("*") || allowedOriginsConfig.equals("*");
 
     if (isWildcard) {
