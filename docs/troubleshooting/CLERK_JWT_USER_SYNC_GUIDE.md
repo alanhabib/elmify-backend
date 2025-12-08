@@ -1,7 +1,7 @@
 # Clerk JWT Authentication & User Sync Guide
 
 > **Date:** December 8, 2025  
-> **Issue:** Backend JWT verification failing, users not syncing on login  
+> **Issue:** Backend JWT verification failing, users not syncing on login, public endpoints returning 401  
 > **Status:** ✅ RESOLVED
 
 ---
@@ -13,45 +13,100 @@ When users logged in via Clerk from the React Native (Expo) frontend, the backen
 1. Properly validate JWT tokens
 2. Automatically sync user profiles to the PostgreSQL database
 3. Allow access to `/api/v1/users/me` endpoint
+4. **Allow access to PUBLIC endpoints when an invalid/expired JWT was present in the request**
 
 ### Error Logs Observed
 
 ```
 WARN  c.e.backend.config.SecurityConfig - Authentication failed: GET /api/v1/users/me from IP: x.x.x.x
 WARN  c.e.b.e.GlobalExceptionHandler - Access denied: Access Denied [traceId: xxxxx]
+
+# Frontend errors (even for public endpoints!):
+[APIClient] Request failed: /api/v1/speakers - 401 Authentication required
+[APIClient] Request failed: /api/v1/collections - 401 Authentication required
 ```
 
 ---
 
 ## Root Cause Analysis
 
-### 1. Missing Automatic User Sync
+### 1. OAuth2 Resource Server Validates ALL JWTs (CRITICAL!)
 
-The original implementation required the frontend to explicitly call `/api/v1/users/sync` after login. However:
+**The main issue:** Spring Security's OAuth2 Resource Server tries to validate ANY JWT present in the `Authorization`
+header. If validation fails (expired, wrong issuer, etc.), it returns 401 **even for public endpoints**.
 
-- The sync endpoint required `@PreAuthorize("isAuthenticated()")`
-- If the JWT validation failed for any reason, users couldn't sync
-- If the user didn't exist in the database, `/api/v1/users/me` returned 404
+This meant:
 
-### 2. JWT Validation Issues
+- User has an expired JWT cached in the app
+- App sends request to `/api/v1/speakers` (public endpoint) with the expired JWT
+- Spring Security tries to validate the JWT → fails
+- Returns 401 instead of letting the request through as anonymous
 
-The Clerk JWT decoder was not logging validation failures clearly, making debugging difficult.
+### 2. Missing Automatic User Sync
 
-### 3. Missing User Creation on First Access
+The original implementation required the frontend to explicitly call `/api/v1/users/sync` after login.
 
-There was no mechanism to automatically create users when they first authenticated with a valid JWT.
+### 3. JWT Validation Issues
+
+The Clerk JWT decoder was not logging validation failures clearly.
 
 ---
 
 ## Solution Implemented
 
-### 1. Created `JwtUserSyncFilter`
+### 1. Custom Bearer Token Resolver (CRITICAL FIX!)
+
+Added a custom `BearerTokenResolver` that **skips JWT extraction for public endpoints**:
+
+**In `SecurityConfig.java`:**
+
+```java
+private BearerTokenResolver optionalBearerTokenResolver() {
+    DefaultBearerTokenResolver defaultResolver = new DefaultBearerTokenResolver();
+
+    return request -> {
+        String uri = request.getRequestURI();
+        String method = request.getMethod();
+
+        // List of public GET endpoints - don't require JWT validation
+        if ("GET".equalsIgnoreCase(method)) {
+            if (uri.startsWith("/api/v1/speakers") ||
+                    uri.startsWith("/api/v1/collections") ||
+                    uri.startsWith("/api/v1/lectures") ||
+                    uri.startsWith("/actuator/health")) {
+                // For public endpoints, skip JWT validation entirely
+                return null;  // <-- This is the key! Returns null = no JWT = anonymous access
+            }
+        }
+
+        // For all other endpoints, extract the token normally
+        return defaultResolver.resolve(request);
+    };
+}
+```
+
+This is configured in the security filter chain:
+
+```java
+.oauth2ResourceServer(oauth2 ->oauth2
+        .
+
+bearerTokenResolver(optionalBearerTokenResolver())  // <-- Use custom resolver
+        .
+
+jwt(jwt ->jwt.
+
+decoder(clerkJwtDecoder)...))
+```
+
+### 2. Created `JwtUserSyncFilter`
 
 A new filter that runs AFTER JWT authentication to automatically sync users from JWT claims:
 
 **File:** `src/main/java/com/elmify/backend/security/JwtUserSyncFilter.java`
 
 ```java
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -61,8 +116,8 @@ public class JwtUserSyncFilter extends OncePerRequestFilter {
     private final UserRepository userRepository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, 
-                                    HttpServletResponse response, 
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
             syncUserFromJwtIfAuthenticated();
@@ -71,7 +126,7 @@ public class JwtUserSyncFilter extends OncePerRequestFilter {
         }
         filterChain.doFilter(request, response);
     }
-    
+
     // ... extracts user info from JWT claims (sub, email, name, picture)
     // ... creates or updates user in database
 }
@@ -84,37 +139,38 @@ public class JwtUserSyncFilter extends OncePerRequestFilter {
 - Updates existing users if their info changed
 - Handles various Clerk JWT claim formats
 
-### 2. Updated SecurityConfig
+### 3. Updated SecurityConfig
 
 Added the filter to the security filter chain:
 
 ```java
-.addFilterAfter(jwtUserSyncFilter, BearerTokenAuthenticationFilter.class);
+.addFilterAfter(jwtUserSyncFilter, BearerTokenAuthenticationFilter .class);
 ```
 
-### 3. Improved JWT Decoder Logging
+### 4. Improved JWT Decoder Logging
 
 Enhanced `ClerkJwtDecoder` to log validation details:
 
 ```java
+
 @Override
 public Jwt decode(String token) throws JwtException {
     try {
         Jwt jwt = jwtDecoder.decode(token);
         if (logger.isDebugEnabled()) {
-            logger.debug("JWT decoded successfully. Subject: {}, Issuer: {}, Expiry: {}", 
-                jwt.getSubject(), jwt.getIssuer(), jwt.getExpiresAt());
+            logger.debug("JWT decoded successfully. Subject: {}, Issuer: {}, Expiry: {}",
+                    jwt.getSubject(), jwt.getIssuer(), jwt.getExpiresAt());
         }
         return jwt;
     } catch (JwtException e) {
-        logger.warn("JWT validation failed: {} - Token prefix: {}...", 
-            e.getMessage(), token != null && token.length() > 20 ? token.substring(0, 20) : "null/short");
+        logger.warn("JWT validation failed: {} - Token prefix: {}...",
+                e.getMessage(), token != null && token.length() > 20 ? token.substring(0, 20) : "null/short");
         throw e;
     }
 }
 ```
 
-### 4. Improved JWT Authentication Converter
+### 5. Improved JWT Authentication Converter
 
 Enhanced `ClerkJwtAuthenticationConverter` to extract roles from Clerk metadata:
 
@@ -122,7 +178,7 @@ Enhanced `ClerkJwtAuthenticationConverter` to extract roles from Clerk metadata:
 private Collection<GrantedAuthority> extractAuthorities(Jwt jwt) {
     List<GrantedAuthority> authorities = new ArrayList<>();
     authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-    
+
     // Check for admin role in Clerk public_metadata
     Map<String, Object> publicMetadata = jwt.getClaim("public_metadata");
     if (publicMetadata != null) {
@@ -131,7 +187,7 @@ private Collection<GrantedAuthority> extractAuthorities(Jwt jwt) {
             authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
         }
     }
-    
+
     return authorities;
 }
 ```
@@ -210,15 +266,20 @@ Clerk JWTs typically include these claims:
 
 ```json
 {
-  "sub": "user_2abc123xyz",           // Clerk User ID (used as clerkId)
+  "sub": "user_2abc123xyz",
+  // Clerk User ID (used as clerkId)
   "email": "user@example.com",
-  "name": "John Doe",                 // or first_name/last_name
-  "picture": "https://...",           // or image_url
+  "name": "John Doe",
+  // or first_name/last_name
+  "picture": "https://...",
+  // or image_url
   "iss": "https://clerk.elmify.store",
   "exp": 1733698800,
   "iat": 1733695200,
-  "public_metadata": {                // Custom metadata set in Clerk
-    "role": "admin"                   // For admin users
+  "public_metadata": {
+    // Custom metadata set in Clerk
+    "role": "admin"
+    // For admin users
   }
 }
 ```
@@ -297,4 +358,3 @@ curl -H "Authorization: Bearer $TEST_JWT" \
 - [Understanding Spring Security JWT](../learning/understanding-spring-security-jwt.md)
 - [Clerk Documentation](https://clerk.com/docs)
 - [Spring Security OAuth2 Resource Server](https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/jwt.html)
-

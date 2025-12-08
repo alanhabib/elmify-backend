@@ -19,9 +19,12 @@ public class ClerkJwtDecoder implements JwtDecoder {
   private static final Logger logger = LoggerFactory.getLogger(ClerkJwtDecoder.class);
 
   private final NimbusJwtDecoder jwtDecoder;
+  private final String expectedIssuer;
 
   public ClerkJwtDecoder(@Value("${elmify.clerk.jwt-issuer}") String clerkIssuer) {
+    this.expectedIssuer = clerkIssuer;
     this.jwtDecoder = createJwtDecoder(clerkIssuer);
+    logger.info("✅ ClerkJwtDecoder initialized. Expected JWT issuer: {}", clerkIssuer);
   }
 
   /**
@@ -32,34 +35,50 @@ public class ClerkJwtDecoder implements JwtDecoder {
    * @return A fully configured NimbusJwtDecoder.
    */
   private NimbusJwtDecoder createJwtDecoder(String issuer) {
-    try {
-      logger.info("Creating JWT decoder for issuer: {}", issuer);
+    logger.info("🔐 Creating JWT decoder for issuer: {}", issuer);
 
+    // Validate issuer URL format
+    if (issuer == null || issuer.isBlank()) {
+      throw new IllegalStateException(
+          "CLERK_JWT_ISSUER is not configured! Set the CLERK_JWT_ISSUER environment variable.");
+    }
+
+    if (!issuer.startsWith("https://")) {
+      logger.warn("⚠️ Issuer URL should start with https:// - current value: {}", issuer);
+    }
+
+    try {
       // Use the standard Spring Security validator that checks the issuer, expiration (exp),
       // and not-before (nbf) claims.
       OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuer);
       OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(withIssuer);
 
-      // Try using the issuer location first (auto-discovery)
-      NimbusJwtDecoder decoder;
-      try {
-        logger.info("Attempting auto-discovery for issuer: {}", issuer);
-        decoder = JwtDecoders.fromIssuerLocation(issuer);
-      } catch (Exception e) {
-        logger.warn("Auto-discovery failed for issuer: {}, trying manual JWKS URI", issuer, e);
-        // Fallback to manual JWKS URI
-        String jwksUri = issuer + "/.well-known/jwks.json";
-        logger.info("Using manual JWKS URI: {}", jwksUri);
-        decoder = NimbusJwtDecoder.withJwkSetUri(jwksUri).build();
-      }
+      // Build the JWKS URI
+      String jwksUri = issuer + "/.well-known/jwks.json";
+      logger.info("📡 JWKS URI that will be used: {}", jwksUri);
 
+      // Create decoder with manual JWKS URI (more reliable than auto-discovery)
+      NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwksUri).build();
       decoder.setJwtValidator(validator);
-      logger.info("Successfully configured JWT decoder for issuer: {}", issuer);
+
+      logger.info("✅ JWT decoder configured successfully for issuer: {}", issuer);
+      logger.info(
+          "💡 If you see 'UnknownHostException', verify CLERK_JWT_ISSUER is correct. "
+              + "It should match your Clerk instance URL (e.g., https://your-app.clerk.accounts.dev)");
 
       return decoder;
     } catch (Exception e) {
-      logger.error("Failed to create JWT decoder for issuer: {}", issuer, e);
-      throw new IllegalStateException("Unable to configure JWT decoder for Clerk", e);
+      logger.error(
+          "❌ Failed to create JWT decoder for issuer: {} - Error: {}", issuer, e.getMessage());
+      logger.error("💡 Common causes:");
+      logger.error(
+          "   1. CLERK_JWT_ISSUER is set to a non-existent domain (e.g., custom domain not configured)");
+      logger.error("   2. DNS cannot resolve the issuer hostname");
+      logger.error("   3. Network connectivity issues from Railway to Clerk");
+      logger.error(
+          "   Recommended: Set CLERK_JWT_ISSUER to your actual Clerk URL like https://your-app.clerk.accounts.dev");
+      throw new IllegalStateException(
+          "Unable to configure JWT decoder for Clerk. Check CLERK_JWT_ISSUER value: " + issuer, e);
     }
   }
 
@@ -76,24 +95,51 @@ public class ClerkJwtDecoder implements JwtDecoder {
     try {
       Jwt jwt = jwtDecoder.decode(token);
 
-      if (logger.isDebugEnabled()) {
-        logger.debug(
-            "JWT decoded successfully. Subject: {}, Issuer: {}, Expiry: {}",
-            jwt.getSubject(),
-            jwt.getIssuer(),
-            jwt.getExpiresAt());
-      }
+      logger.info(
+          "JWT decoded successfully. Subject: {}, Issuer: {}, Expiry: {}",
+          jwt.getSubject(),
+          jwt.getIssuer(),
+          jwt.getExpiresAt());
 
       return jwt;
     } catch (JwtException e) {
-      // Log the specific validation error for easier debugging in logs.
-      logger.warn(
-          "JWT validation failed: {} - Token prefix: {}...",
+      // Log detailed validation error for easier debugging
+      // Try to extract issuer from token for debugging (without validation)
+      String tokenIssuer = extractIssuerFromToken(token);
+      logger.error(
+          "❌ JWT validation failed! Error: {} | Token issuer: '{}' | Expected issuer: '{}'",
           e.getMessage(),
-          token != null && token.length() > 20 ? token.substring(0, 20) : "null/short");
-      // Re-throw the exception to let the Spring Security filter chain handle the authentication
-      // failure.
+          tokenIssuer,
+          expectedIssuer);
       throw e;
+    }
+  }
+
+  /** Extract issuer from JWT token without validation (for debugging purposes only) */
+  private String extractIssuerFromToken(String token) {
+    try {
+      if (token == null || !token.contains(".")) {
+        return "invalid-token-format";
+      }
+      String[] parts = token.split("\\.");
+      if (parts.length < 2) {
+        return "invalid-token-format";
+      }
+      String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]));
+      // Simple extraction - look for "iss" claim
+      int issIndex = payload.indexOf("\"iss\"");
+      if (issIndex == -1) {
+        return "no-iss-claim";
+      }
+      int colonIndex = payload.indexOf(":", issIndex);
+      int quoteStart = payload.indexOf("\"", colonIndex);
+      int quoteEnd = payload.indexOf("\"", quoteStart + 1);
+      if (quoteStart != -1 && quoteEnd != -1) {
+        return payload.substring(quoteStart + 1, quoteEnd);
+      }
+      return "could-not-parse";
+    } catch (Exception ex) {
+      return "parse-error: " + ex.getMessage();
     }
   }
 }
