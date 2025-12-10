@@ -97,13 +97,14 @@ public class PlaylistManifestController {
     })
     public ResponseEntity<PlaylistManifestResponse> getPlaylistManifest(
             @Valid @RequestBody PlaylistManifestRequest request,
-            @AuthenticationPrincipal(errorOnInvalidToken = false) Jwt jwt) {
+            @AuthenticationPrincipal Jwt jwt) {
 
         // Extract user ID from JWT (null for anonymous/guest users)
-        String userId = jwt != null ? jwt.getSubject() : "anonymous";
+        // Best practice: Keep null for anonymous users to maintain type consistency
+        String userId = jwt != null ? jwt.getSubject() : null;
 
-        // Rate limiting check
-        Bucket bucket = getBucket(userId);
+        // Rate limiting check - use "anonymous" identifier only for bucketing
+        Bucket bucket = getBucket(userId != null ? userId : "anonymous");
         if (!bucket.tryConsume(1)) {
             log.warn("⚠️ Rate limit exceeded for user: {}", userId);
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
