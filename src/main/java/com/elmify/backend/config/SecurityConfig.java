@@ -13,8 +13,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
-import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
@@ -141,7 +139,6 @@ public class SecurityConfig {
         .oauth2ResourceServer(
             oauth2 ->
                 oauth2
-                    .bearerTokenResolver(optionalBearerTokenResolver())
                     .jwt(
                         jwt ->
                             jwt.decoder(clerkJwtDecoder)
@@ -184,42 +181,6 @@ public class SecurityConfig {
         .addFilterAfter(jwtUserSyncFilter, BearerTokenAuthenticationFilter.class);
 
     return http.build();
-  }
-
-  /**
-   * Custom bearer token resolver that only extracts tokens for authenticated endpoints. For public
-   * endpoints, it returns null so JWT validation is skipped. This prevents 401 errors when an
-   * invalid/expired JWT is sent with public requests.
-   */
-  private BearerTokenResolver optionalBearerTokenResolver() {
-    DefaultBearerTokenResolver defaultResolver = new DefaultBearerTokenResolver();
-
-    return request -> {
-      String uri = request.getRequestURI();
-      String method = request.getMethod();
-
-      // List of public GET endpoints - don't require JWT validation
-      if ("GET".equalsIgnoreCase(method)) {
-        if (uri.startsWith("/api/v1/speakers")
-            || uri.startsWith("/api/v1/collections")
-            || uri.startsWith("/api/v1/lectures")
-            || uri.startsWith("/actuator/health")) {
-          // For public endpoints, skip JWT validation entirely
-          // This allows requests with invalid/expired tokens to still access public data
-          log.debug("Skipping JWT validation for public endpoint: {} {}", method, uri);
-          return null;
-        }
-      }
-
-      // For POST to playlist manifest (public)
-      if ("POST".equalsIgnoreCase(method) && uri.equals("/api/v1/playlists/manifest")) {
-        log.debug("Skipping JWT validation for public POST endpoint: {}", uri);
-        return null;
-      }
-
-      // For all other endpoints, extract the token normally
-      return defaultResolver.resolve(request);
-    };
   }
 
   /** Configures CORS using environment-specific origins for security. */
