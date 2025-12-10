@@ -97,10 +97,10 @@ public class PlaylistManifestController {
     })
     public ResponseEntity<PlaylistManifestResponse> getPlaylistManifest(
             @Valid @RequestBody PlaylistManifestRequest request,
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthenticationPrincipal(errorOnInvalidToken = false) Jwt jwt) {
 
-        // Extract user ID from JWT
-        String userId = jwt != null ? jwt.getSubject() : null;
+        // Extract user ID from JWT (null for anonymous/guest users)
+        String userId = jwt != null ? jwt.getSubject() : "anonymous";
 
         // Rate limiting check
         Bucket bucket = getBucket(userId);
